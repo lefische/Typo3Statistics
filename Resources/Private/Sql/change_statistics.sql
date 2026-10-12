@@ -5,9 +5,9 @@
 -- Liegt eine Site innerhalb eines anderen Baums, gehören ihre Seiten zur inneren Site.
 -- Übersetzte Seiten werden über l10n_parent dem Baum der Standardsprache zugeordnet.
 --
--- Jede Abfrage liefert eine einzige Spalte "zeile" mit Semikolon-getrennten Werten (erste Zeile = Spaltenköpfe),
+-- Jede Abfrage liefert eine einzige Spalte (Spaltenname = Überschrift des Blocks) mit Semikolon-getrennten Werten (erste Zeile = Spaltenköpfe),
 -- die sich direkt als CSV speichern bzw. in Excel einfügen lässt. Titel stehen in Anführungszeichen.
--- Auf der Kommandozeile ohne Tabellenrahmen ausgeben:  mysql -N -B datenbank < change_statistics.sql > aenderungen.csv
+-- Auf der Kommandozeile ohne Tabellenrahmen, mit Überschriften:  mysql -B datenbank < change_statistics.sql > aenderungen.csv
 -- ---------------------------------------------------------------------------------------------------------------------
 
 
@@ -51,7 +51,7 @@ result AS (
     JOIN pages r ON r.uid = pr.root_uid
     GROUP BY r.uid, r.title, monat
 )
-SELECT zeile
+SELECT zeile AS `1) Änderungen pro Monat und Seitenbaum – Änderungsverlauf (sys_history), Seiten + Inhalte, letzte 12 Monate`
 FROM (
     SELECT 0 AS kopf, NULL AS root_uid, NULL AS monat, 'root_uid;root_title;monat;aenderungen;letzte_aenderung_im_monat' AS zeile
     UNION ALL
@@ -93,7 +93,7 @@ result AS (
       AND l.tstamp >= UNIX_TIMESTAMP(DATE_FORMAT(CURDATE() - INTERVAL 11 MONTH, '%Y-%m-01'))
     GROUP BY r.uid, r.title, monat
 )
-SELECT zeile
+SELECT zeile AS `2) Änderungen pro Monat und Seitenbaum – Backend-Protokoll (sys_log), alle Tabellen, letzte 12 Monate`
 FROM (
     SELECT 0 AS kopf, NULL AS root_uid, NULL AS monat, 'root_uid;root_title;monat;aenderungen;letzte_aenderung_im_monat' AS zeile
     UNION ALL
@@ -135,7 +135,7 @@ result AS (
     JOIN pages r ON r.uid = pr.root_uid
     GROUP BY r.uid, r.title
 )
-SELECT zeile
+SELECT zeile AS `3) Letzte Änderung je Seitenbaum – neuester Zeitstempel von Seiten und Inhalten`
 FROM (
     SELECT 0 AS kopf, NULL AS letzte_aenderung, 'root_uid;root_title;seiten;letzte_aenderung' AS zeile
     UNION ALL
