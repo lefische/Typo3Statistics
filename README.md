@@ -95,16 +95,18 @@ Der Befehl ist `schedulable`, kann also auch als Scheduler-Task laufen.
 
 ## Ohne Extension: reine SQL-Abfragen
 
-In [`Resources/Private/Sql/change_statistics.sql`](Resources/Private/Sql/change_statistics.sql) liegen drei
-Abfragen für MySQL ≥ 8.0 / MariaDB ≥ 10.2 (z. B. für phpMyAdmin oder Adminer):
+In [`Resources/Private/Sql/`](Resources/Private/Sql/) liegen drei eigenständige SQL-Skripte für
+MySQL ≥ 8.0 / MariaDB ≥ 10.2 (z. B. für phpMyAdmin, Adminer oder die Kommandozeile):
 
-1. Änderungen pro Monat und Baum aus `sys_history` (Seiten + Inhaltselemente),
-2. Änderungen pro Monat und Baum aus `sys_log` (alle Tabellen),
-3. letzte Änderung je Baum anhand der `tstamp`-Felder.
+| Skript                                                                                       | Inhalt                                                        |
+|----------------------------------------------------------------------------------------------|---------------------------------------------------------------|
+| [`1_changes_per_month_history.sql`](Resources/Private/Sql/1_changes_per_month_history.sql)   | Änderungen pro Monat und Baum aus `sys_history` (Seiten + Inhaltselemente) |
+| [`2_changes_per_month_log.sql`](Resources/Private/Sql/2_changes_per_month_log.sql)           | Änderungen pro Monat und Baum aus `sys_log` (alle Tabellen)   |
+| [`3_last_change_per_tree.sql`](Resources/Private/Sql/3_last_change_per_tree.sql)             | letzte Änderung je Baum anhand der `tstamp`-Felder            |
 
 Die SQL-Variante nimmt als Wurzeln die Seiten mit `is_siteroot = 1`. Änderungen, bei denen nur `is_siteroot`
 umgestellt wurde, zählen auch hier nicht (CTE `ignored`, benötigt die JSON-Funktionen von MySQL 8 / MariaDB 10.2.3+).
-Die Ausgabe ist Semikolon-getrennt (eine Spalte, deren Name die Überschrift des Blocks ist; erste Datenzeile = Spaltenköpfe), z. B.:
+Die Ausgabe ist Semikolon-getrennt (eine Spalte, deren Name die Überschrift des Skripts ist; erste Datenzeile = Spaltenköpfe), z. B.:
 
 ```
 root_uid;root_title;monat;aenderungen;letzte_aenderung_im_monat
@@ -112,4 +114,10 @@ root_uid;root_title;monat;aenderungen;letzte_aenderung_im_monat
 1;"Home";2026-09;3;2026-09-20 12:00:00
 ```
 
-Direkt als CSV-Datei speichern: `mysql -B datenbank < change_statistics.sql > aenderungen.csv` (jeder Block beginnt mit seiner Überschrift)
+Direkt als CSV-Dateien speichern (erste Zeile ist jeweils die Überschrift):
+
+```bash
+mysql -B datenbank < Resources/Private/Sql/1_changes_per_month_history.sql > aenderungen_history.csv
+mysql -B datenbank < Resources/Private/Sql/2_changes_per_month_log.sql     > aenderungen_log.csv
+mysql -B datenbank < Resources/Private/Sql/3_last_change_per_tree.sql      > letzte_aenderung.csv
+```
