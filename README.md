@@ -72,6 +72,67 @@ Beispielausgabe:
 
 Der Befehl ist `schedulable`, kann also auch als Scheduler-Task laufen.
 
+### Spalten der Ausgabe
+
+#### Tabelle „Übersicht“ (eine Zeile pro Seitenbaum)
+
+| Spalte | Bedeutung |
+|---|---|
+| **Site** | Identifier der Site aus `config/sites/<identifier>/config.yaml`. Wird mit `--site` eine Seiten-UID ohne eigene Site ausgewertet, steht hier `page-<uid>`. |
+| **Wurzelseite** | Titel der Startseite des Baums, in eckigen Klammern ihre UID (`rootPageId`). |
+| **Seiten** | Anzahl aller Datensätze in `pages`, die zu diesem Baum gehören – inklusive Wurzelseite, Unterseiten aller Ebenen, Ordnern, versteckten, gelöschten und übersetzten Seiten. Seiten einer darin verschachtelten Site zählen nicht mit. Die Zahl hängt nicht vom Zeitraum ab. |
+| **Letzte Änderung (Verlauf)** | Zeitpunkt der jüngsten **gezählten** Änderung im gewählten Zeitraum laut `sys_history` bzw. `sys_log`. Berücksichtigt `--table`, `--exclude-table` und `--ignore-field`. `–` = im Zeitraum keine Änderung. |
+| **Letzte Änderung (Datensätze)** | Höchster `tstamp` (Feld „Zuletzt geändert“) aller Datensätze im Baum über alle Tabellen mit TCA – also Seiten, Inhaltselemente, News usw., auch versteckte und gelöschte. Unabhängig vom Zeitraum und davon, ob der Verlauf bereinigt wurde. Berücksichtigt `--table`/`--exclude-table`; stammt der `tstamp` von einer ignorierten Änderung, gilt die letzte echte Änderung bzw. das Erstellungsdatum. |
+| **Änderungen** | Summe aller gezählten Änderungen im Zeitraum (= Summe der Spalte dieser Site in der Monatstabelle). |
+
+Warum zwei Spalten „Letzte Änderung“? *Verlauf* zählt echte Bearbeitungsvorgänge, reicht aber nur so weit zurück wie
+`sys_history`/`sys_log`. *Datensätze* ist immer vorhanden, kann aber auch durch Vorgänge ohne Verlaufseintrag (z. B.
+Importe, Upgrade-Wizards, direkte Datenbank-Updates) gesetzt worden sein. Liegen beide weit auseinander, lohnt ein Blick
+in den Verlauf.
+
+#### Tabelle „Änderungen pro Monat“
+
+| Spalte | Bedeutung |
+|---|---|
+| **Monat** | Kalendermonat im Format `JJJJ-MM` (Zeitzone der TYPO3-Installation). Alle Monate des Zeitraums werden aufgeführt, auch solche ohne Änderung. |
+| **&lt;Site-Identifier&gt;** | Je Site eine Spalte: Anzahl der gezählten Änderungen in diesem Monat. |
+| **Summe** | Summe über alle angezeigten Sites in diesem Monat. |
+
+Eine **Änderung** ist ein Eintrag im Änderungsverlauf: jedes Speichern eines Datensatzes, Anlegen, Verschieben,
+Löschen oder Wiederherstellen zählt einzeln. Wer eine Seite dreimal speichert, erzeugt drei Änderungen. Speichert man
+eine Seite mit Übersetzungen, kann TYPO3 zusätzlich Einträge für die Übersetzungen anlegen.
+
+Unter den Tabellen erscheinen ggf. Hinweise, wie viele Änderungen **nicht gezählt** wurden (nur ignorierte Felder wie
+`is_siteroot` geändert) und wie viele **keinem Baum zugeordnet** werden konnten (Datensätze auf Root-Ebene wie
+`be_users`/`sys_file` oder Datensätze, die inzwischen endgültig gelöscht sind).
+
+#### CSV (`--format=csv`)
+
+Semikolon-getrennt, eine Zeile pro Site **und** Monat (Langformat, ideal für Pivot-Tabellen):
+
+| Spalte | Bedeutung |
+|---|---|
+| `site` | Site-Identifier (wie Spalte *Site*) |
+| `root_page_id` | UID der Wurzelseite |
+| `root_title` | Titel der Wurzelseite |
+| `month` | Monat `JJJJ-MM`; auch Monate ohne Änderung sind enthalten |
+| `changes` | Anzahl der Änderungen dieser Site in diesem Monat |
+| `last_change` | wie *Letzte Änderung (Verlauf)* – bezieht sich auf den **gesamten** Zeitraum, nicht auf den Monat, und wiederholt sich daher in jeder Zeile der Site; leer, wenn keine Änderung |
+| `last_record_tstamp` | wie *Letzte Änderung (Datensätze)*, ebenfalls je Site wiederholt |
+
+Datumswerte sind im Format ISO 8601 mit Zeitzone, z. B. `2026-09-20T12:00:00+02:00`.
+
+#### JSON (`--format=json`)
+
+| Feld | Bedeutung |
+|---|---|
+| `source` | `history` oder `log` |
+| `since` | Beginn des Zeitraums `JJJJ-MM`, `null` = gesamter Zeitraum |
+| `generated` | Erstellungszeitpunkt der Auswertung |
+| `unassigned` | Anzahl der keinem Baum zuordenbaren Änderungen |
+| `ignored` | Anzahl der nicht gezählten Änderungen (nur ignorierte Felder) |
+| `sites[]` | je Site: `site`, `rootPageId`, `title`, `pages`, `lastChange`, `lastRecordTstamp`, `total` (entsprechen den Spalten der Übersicht) und `months` (Objekt `{"JJJJ-MM": Anzahl}`) |
+
 ## So wird gezählt
 
 - **Seitenbäume**: alle Sites aus `config/sites/*` (Fallback: Seiten mit *Als Anfang der Webseite benutzen*).
@@ -106,13 +167,41 @@ MySQL ≥ 8.0 / MariaDB ≥ 10.2 (z. B. für phpMyAdmin, Adminer oder die Komman
 
 Die SQL-Variante nimmt als Wurzeln die Seiten mit `is_siteroot = 1`. Änderungen, bei denen nur `is_siteroot`
 umgestellt wurde, zählen auch hier nicht (CTE `ignored`, benötigt die JSON-Funktionen von MySQL 8 / MariaDB 10.2.3+).
-Die Ausgabe ist Semikolon-getrennt (eine Spalte, deren Name die Überschrift des Skripts ist; erste Datenzeile = Spaltenköpfe), z. B.:
+Die Ausgabe ist Semikolon-getrennt: eine einzige Spalte, deren Name die Überschrift des Skripts ist; die erste
+Datenzeile enthält die Spaltenköpfe, Titel stehen in Anführungszeichen. Beispiel:
 
 ```
 root_uid;root_title;monat;aenderungen;letzte_aenderung_im_monat
 1;"Home";2026-08;1;2026-08-15 12:00:00
 1;"Home";2026-09;3;2026-09-20 12:00:00
 ```
+
+### Spalten der SQL-Skripte
+
+**`1_changes_per_month_history.sql`** und **`2_changes_per_month_log.sql`** – eine Zeile pro Seitenbaum und Monat,
+sortiert nach Wurzelseite und Monat:
+
+| Spalte | Bedeutung |
+|---|---|
+| `root_uid` | UID der Wurzelseite (Seite mit *Als Anfang der Webseite benutzen*) |
+| `root_title` | Titel der Wurzelseite |
+| `monat` | Kalendermonat `JJJJ-MM`. **Nur Monate mit mindestens einer Änderung** erscheinen (anders als in der Extension). Zeitraum: die letzten 12 Monate inkl. aktuellem Monat – anpassbar über `INTERVAL 11 MONTH` im Skript. |
+| `aenderungen` | Anzahl der Änderungen in diesem Monat. Skript 1: Einträge in `sys_history` für Seiten und Inhaltselemente. Skript 2: Einträge in `sys_log` (Datenbankaktionen neu/geändert/gelöscht/verschoben/übersetzt) für alle Tabellen. |
+| `letzte_aenderung_im_monat` | Zeitpunkt der letzten Änderung **innerhalb dieses Monats** (`JJJJ-MM-TT hh:mm:ss`). Die letzte Änderung des Baums insgesamt ist der Wert in der jüngsten Monatszeile. |
+
+Die Zahlen der Skripte 1 und 2 unterscheiden sich in der Regel: `sys_log` enthält Änderungen aller Tabellen,
+`sys_history` (in Skript 1) nur Seiten und Inhaltselemente; außerdem werden beide Tabellen unabhängig voneinander bereinigt.
+
+**`3_last_change_per_tree.sql`** – eine Zeile pro Seitenbaum, sortiert nach der letzten Änderung (neueste zuerst):
+
+| Spalte | Bedeutung |
+|---|---|
+| `root_uid` | UID der Wurzelseite |
+| `root_title` | Titel der Wurzelseite |
+| `seiten` | Anzahl aller Seiten des Baums inkl. Wurzelseite, Ordnern, versteckten, gelöschten und übersetzten Seiten; Unterbäume mit eigenem *Als Anfang der Webseite benutzen* zählen nicht mit |
+| `letzte_aenderung` | Höchster `tstamp` aller Seiten und Inhaltselemente des Baums (auch versteckte/gelöschte), ohne zeitliche Einschränkung. Wurde zuletzt nur `is_siteroot` umgestellt, gilt die letzte echte Änderung laut Verlauf bzw. das Erstellungsdatum der Seite. |
+
+Datumswerte werden in der Zeitzone der Datenbankverbindung ausgegeben.
 
 Direkt als CSV-Dateien speichern (erste Zeile ist jeweils die Überschrift):
 
