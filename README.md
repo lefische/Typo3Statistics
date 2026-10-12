@@ -98,3 +98,12 @@ Abfragen für MySQL ≥ 8.0 / MariaDB ≥ 10.2 (z. B. für phpMyAdmin oder Admin
 3. letzte Änderung je Baum anhand der `tstamp`-Felder.
 
 Die SQL-Variante nimmt als Wurzeln die Seiten mit `is_siteroot = 1`.
+Die Ausgabe ist Semikolon-getrennt (eine Spalte `zeile`, erste Zeile = Spaltenköpfe), z. B.:
+
+```
+root_uid;root_title;monat;aenderungen;letzte_aenderung_im_monat
+1;"Home";2026-08;1;2026-08-15 12:00:00
+1;"Home";2026-09;3;2026-09-20 12:00:00
+```
+
+Direkt als CSV-Datei speichern: `mysql -N -B datenbank < change_statistics.sql > aenderungen.csv`
