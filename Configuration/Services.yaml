@@ -1,0 +1,15 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Lefische\Typo3Statistics\:
+    resource: '../Classes/*'
+
+  Lefische\Typo3Statistics\Command\ChangeStatisticsCommand:
+    tags:
+      - name: console.command
+        command: 'statistics:changes'
+        description: 'Zeigt pro Seitenbaum die letzte Änderung und die Anzahl der Änderungen pro Monat'
+        schedulable: true
