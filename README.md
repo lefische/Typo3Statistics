@@ -46,6 +46,7 @@ vendor/bin/typo3 statistics:changes --format=json
 | `-s, --site`            | Site-Identifier oder Seiten-UID; eine UID ohne Site wird als eigener Teilbaum ausgewertet   |
 | `-t, --table`           | Nur diese Tabellen zählen                                                                   |
 | `-x, --exclude-table`   | Diese Tabellen nicht zählen                                                                 |
+| `-i, --ignore-field`    | Änderungen, die nur diese Felder betreffen, nicht zählen (Standard: `is_siteroot`; `none` = alles zählen) |
 | `-f, --format`          | `table` (Standard), `csv` oder `json`                                                       |
 
 Beispielausgabe:
@@ -81,6 +82,10 @@ Der Befehl ist `schedulable`, kann also auch als Scheduler-Task laufen.
   (Backend-Protokoll, Aktionen neu/geändert/gelöscht/verschoben/übersetzt).
 - **Letzte Änderung (Datensätze)**: höchster `tstamp` aller Datensätze mit TCA im Baum – unabhängig vom Zeitraum
   und auch dann aussagekräftig, wenn der Verlauf bereits bereinigt wurde.
+- **Ignorierte Änderungen**: Wurde an einem Datensatz ausschließlich *Als Anfang der Webseite benutzen*
+  (`is_siteroot`) umgestellt, zählt das nicht als Änderung – weder in der Monatsstatistik noch bei der letzten
+  Änderung (dort gilt dann die letzte echte Änderung bzw. das Erstellungsdatum). Grundlage sind die geänderten Felder
+  in `sys_history`; das gilt auch für `--source=log`. Weitere Felder: `-i is_siteroot -i nav_hide`, alles zählen: `-i none`.
 - Änderungen, die keinem Baum zugeordnet werden können (z. B. `be_users`, `sys_file` oder endgültig gelöschte
   Datensätze), werden separat als Hinweis ausgegeben.
 
@@ -97,7 +102,8 @@ Abfragen für MySQL ≥ 8.0 / MariaDB ≥ 10.2 (z. B. für phpMyAdmin oder Admin
 2. Änderungen pro Monat und Baum aus `sys_log` (alle Tabellen),
 3. letzte Änderung je Baum anhand der `tstamp`-Felder.
 
-Die SQL-Variante nimmt als Wurzeln die Seiten mit `is_siteroot = 1`.
+Die SQL-Variante nimmt als Wurzeln die Seiten mit `is_siteroot = 1`. Änderungen, bei denen nur `is_siteroot`
+umgestellt wurde, zählen auch hier nicht (CTE `ignored`, benötigt die JSON-Funktionen von MySQL 8 / MariaDB 10.2.3+).
 Die Ausgabe ist Semikolon-getrennt (eine Spalte, deren Name die Überschrift des Blocks ist; erste Datenzeile = Spaltenköpfe), z. B.:
 
 ```

@@ -30,6 +30,12 @@ final class ChangeStatisticsService
     private const LOG_TYPE_DB = 1;
     /** sys_log: insert, update, delete, move, localize */
     private const LOG_ACTIONS = [1, 2, 3, 4, 6];
+    /** sys_log: update */
+    private const LOG_ACTION_UPDATE = 2;
+    /** sys_history: modify */
+    private const HISTORY_ACTION_MODIFY = 2;
+    /** Technische Felder, die bei der Prüfung "nur ignorierte Felder geändert" nicht mitzählen */
+    private const TECHNICAL_FIELDS = ['l10n_diffsource', 'l10n_state'];
 
     public function __construct(
         private readonly ConnectionPool $connectionPool,
@@ -100,14 +106,17 @@ final class ChangeStatisticsService
      * @param array<int, array{rootPageId: int, identifier: string, title: string}> $roots
      * @param list<string> $onlyTables leer = alle Tabellen
      * @param list<string> $excludeTables
+     * @param list<string> $ignoreFields Änderungen, die ausschließlich diese Felder betreffen, werden nicht gezählt
      * @return array{
      *     roots: array<int, array{rootPageId: int, identifier: string, title: string, pages: int, total: int, lastChange: ?int, lastRecordTstamp: ?int, months: array<string, int>}>,
      *     unassigned: int,
      *     months: list<string>
      * }
      */
-    public function calculate(array $roots, string $source, int $since, array $onlyTables = [], array $excludeTables = []): array
+    public function calculate(array $roots, string $source, int $since, array $onlyTables = [], array $excludeTables = [], array $ignoreFields = []): array
     {
+        $ignoredChanges = $this->findIgnoredChanges($ignoreFields, $onlyTables, $excludeTables);
+
         // Alle Sites als Baumgrenzen verwenden, damit eine verschachtelte Site auch dann nicht zum äußeren Baum zählt,
         // wenn sie selbst nicht ausgewählt ist.
         $pageToRoot = $this->buildPageToRootMap(array_values(array_unique([...array_keys($roots), ...array_keys($this->getAllRoots())])));
@@ -123,8 +132,8 @@ final class ChangeStatisticsService
         }
 
         $events = $source === self::SOURCE_LOG
-            ? $this->collectFromLog($since, $onlyTables, $excludeTables)
-            : $this->collectFromHistory($since, $onlyTables, $excludeTables);
+            ? $this->collectFromLog($since, $onlyTables, $excludeTables, $ignoredChanges)
+            : $this->collectFromHistory($since, $onlyTables, $excludeTables, $ignoredChanges);
 
         $unassigned = 0;
         $allMonths = [];
@@ -146,7 +155,7 @@ final class ChangeStatisticsService
             $result[$rootUid]['lastChange'] = max($result[$rootUid]['lastChange'] ?? 0, $last);
         }
 
-        foreach ($this->collectRecordTimestamps($onlyTables, $excludeTables) as $pageUid => $tstamp) {
+        foreach ($this->collectRecordTimestamps($onlyTables, $excludeTables, $ignoredChanges) as $pageUid => $tstamp) {
             $rootUid = $pageToRoot[$pageUid] ?? null;
             if ($rootUid !== null && isset($result[$rootUid])) {
                 $result[$rootUid]['lastRecordTstamp'] = max($result[$rootUid]['lastRecordTstamp'] ?? 0, $tstamp);
@@ -161,6 +170,7 @@ final class ChangeStatisticsService
         return [
             'roots' => $result,
             'unassigned' => $unassigned,
+            'ignored' => $this->countIgnored($ignoredChanges, $since),
             'months' => $this->monthRange($since, array_keys($allMonths)),
         ];
     }
@@ -218,12 +228,12 @@ final class ChangeStatisticsService
     /**
      * @return array<string, array<int, array<int, array{months: array<string, int>, last: int}>>> table => recuid => pid-hint => data
      */
-    private function collectFromHistory(int $since, array $onlyTables, array $excludeTables): array
+    private function collectFromHistory(int $since, array $onlyTables, array $excludeTables, array $ignoredChanges): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_history');
         $queryBuilder->getRestrictions()->removeAll();
         $queryBuilder
-            ->select('tablename', 'recuid', 'tstamp')
+            ->select('tablename', 'recuid', 'tstamp', 'actiontype')
             ->from('sys_history')
             ->where($queryBuilder->expr()->gte('tstamp', $queryBuilder->createNamedParameter($since, Connection::PARAM_INT)));
         $this->addTableConstraints($queryBuilder, 'tablename', $onlyTables, $excludeTables);
@@ -231,6 +241,11 @@ final class ChangeStatisticsService
         $events = [];
         $result = $queryBuilder->executeQuery();
         while ($row = $result->fetchAssociative()) {
+            if ((int)$row['actiontype'] === self::HISTORY_ACTION_MODIFY
+                && isset($ignoredChanges[$row['tablename']][(int)$row['recuid']][(int)$row['tstamp']])
+            ) {
+                continue;
+            }
             $this->addEvent($events, (string)$row['tablename'], (int)$row['recuid'], 0, (int)$row['tstamp']);
         }
         return $events;
@@ -239,12 +254,12 @@ final class ChangeStatisticsService
     /**
      * @return array<string, array<int, array<int, array{months: array<string, int>, last: int}>>>
      */
-    private function collectFromLog(int $since, array $onlyTables, array $excludeTables): array
+    private function collectFromLog(int $since, array $onlyTables, array $excludeTables, array $ignoredChanges): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_log');
         $queryBuilder->getRestrictions()->removeAll();
         $queryBuilder
-            ->select('tablename', 'recuid', 'event_pid', 'tstamp')
+            ->select('tablename', 'recuid', 'event_pid', 'tstamp', 'action')
             ->from('sys_log')
             ->where(
                 $queryBuilder->expr()->gte('tstamp', $queryBuilder->createNamedParameter($since, Connection::PARAM_INT)),
@@ -258,9 +273,82 @@ final class ChangeStatisticsService
         $events = [];
         $result = $queryBuilder->executeQuery();
         while ($row = $result->fetchAssociative()) {
+            // sys_log kennt die geänderten Felder nicht; der passende sys_history-Eintrag (gleicher Datensatz,
+            // gleicher Zeitpunkt) verrät, ob nur ignorierte Felder geändert wurden.
+            if ((int)$row['action'] === self::LOG_ACTION_UPDATE
+                && isset($ignoredChanges[$row['tablename']][(int)$row['recuid']][(int)$row['tstamp']])
+            ) {
+                continue;
+            }
             $this->addEvent($events, (string)$row['tablename'], (int)$row['recuid'], max(0, (int)$row['event_pid']), (int)$row['tstamp']);
         }
         return $events;
+    }
+
+    /**
+     * Sucht in sys_history alle Änderungen, bei denen ausschließlich ignorierte Felder (z. B. is_siteroot) geändert
+     * wurden. Grundlage ist history_data.newRecord, das genau die geänderten Felder enthält.
+     *
+     * @param list<string> $ignoreFields
+     * @return array<string, array<int, array<int, true>>> table => recuid => tstamp => true
+     */
+    private function findIgnoredChanges(array $ignoreFields, array $onlyTables, array $excludeTables): array
+    {
+        if ($ignoreFields === []) {
+            return [];
+        }
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_history');
+        $queryBuilder->getRestrictions()->removeAll();
+        $fieldConstraints = [];
+        foreach ($ignoreFields as $field) {
+            $fieldConstraints[] = $queryBuilder->expr()->like(
+                'history_data',
+                $queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards('"' . $field . '"') . '%')
+            );
+        }
+        $queryBuilder
+            ->select('tablename', 'recuid', 'tstamp', 'history_data')
+            ->from('sys_history')
+            ->where(
+                $queryBuilder->expr()->eq('actiontype', $queryBuilder->createNamedParameter(self::HISTORY_ACTION_MODIFY, Connection::PARAM_INT)),
+                $queryBuilder->expr()->or(...$fieldConstraints),
+            );
+        $this->addTableConstraints($queryBuilder, 'tablename', $onlyTables, $excludeTables);
+
+        $ignored = [];
+        $result = $queryBuilder->executeQuery();
+        while ($row = $result->fetchAssociative()) {
+            $table = (string)$row['tablename'];
+            $data = json_decode((string)$row['history_data'], true);
+            if (!is_array($data) || !is_array($data['newRecord'] ?? null)) {
+                continue;
+            }
+            $notIgnoredFields = array_diff(
+                array_keys($data['newRecord']),
+                $ignoreFields,
+                self::TECHNICAL_FIELDS,
+                [(string)($GLOBALS['TCA'][$table]['ctrl']['tstamp'] ?? 'tstamp')],
+            );
+            if ($notIgnoredFields === []) {
+                $ignored[$table][(int)$row['recuid']][(int)$row['tstamp']] = true;
+            }
+        }
+        return $ignored;
+    }
+
+    private function countIgnored(array $ignoredChanges, int $since): int
+    {
+        $count = 0;
+        foreach ($ignoredChanges as $records) {
+            foreach ($records as $timestamps) {
+                foreach (array_keys($timestamps) as $tstamp) {
+                    if ($tstamp >= $since) {
+                        $count++;
+                    }
+                }
+            }
+        }
+        return $count;
     }
 
     private function addEvent(array &$events, string $table, int $recordUid, int $pidHint, int $tstamp): void
@@ -337,7 +425,7 @@ final class ChangeStatisticsService
      *
      * @return array<int, int> page uid => tstamp
      */
-    private function collectRecordTimestamps(array $onlyTables, array $excludeTables): array
+    private function collectRecordTimestamps(array $onlyTables, array $excludeTables, array $ignoredChanges): array
     {
         $timestamps = [];
         foreach ($GLOBALS['TCA'] ?? [] as $table => $config) {
@@ -349,22 +437,98 @@ final class ChangeStatisticsService
                 continue;
             }
             $pageField = $table === 'pages' ? 'uid' : 'pid';
+            // Datensätze mit ignorierten Änderungen separat behandeln, da ihr tstamp durch diese Änderung gesetzt wurde
+            $affectedUids = array_keys($ignoredChanges[$table] ?? []);
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($table);
             $queryBuilder->getRestrictions()->removeAll();
+            $queryBuilder
+                ->select($pageField)
+                ->addSelectLiteral($queryBuilder->expr()->max($tstampField, 'last_tstamp'))
+                ->from($table)
+                ->where($queryBuilder->expr()->gt($pageField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)))
+                ->groupBy($pageField);
+            if ($affectedUids !== []) {
+                $queryBuilder->andWhere($queryBuilder->expr()->notIn('uid', $queryBuilder->createNamedParameter($affectedUids, Connection::PARAM_INT_ARRAY)));
+            }
             try {
-                $result = $queryBuilder
-                    ->select($pageField)
-                    ->addSelectLiteral($queryBuilder->expr()->max($tstampField, 'last_tstamp'))
-                    ->from($table)
-                    ->where($queryBuilder->expr()->gt($pageField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)))
-                    ->groupBy($pageField)
-                    ->executeQuery();
+                $result = $queryBuilder->executeQuery();
             } catch (\Throwable) {
                 continue;
             }
             while ($row = $result->fetchAssociative()) {
                 $pageUid = (int)$row[$pageField];
                 $timestamps[$pageUid] = max($timestamps[$pageUid] ?? 0, (int)$row['last_tstamp']);
+            }
+            if ($affectedUids !== []) {
+                foreach ($this->correctedTimestamps($table, $pageField, $tstampField, $affectedUids, $ignoredChanges[$table]) as $pageUid => $tstamp) {
+                    $timestamps[$pageUid] = max($timestamps[$pageUid] ?? 0, $tstamp);
+                }
+            }
+        }
+        return $timestamps;
+    }
+
+    /**
+     * tstamp für Datensätze, deren letzte Änderung ignoriert wird: stattdessen die letzte relevante Änderung laut
+     * sys_history, mindestens aber das Erstellungsdatum.
+     *
+     * @param list<int> $uids
+     * @param array<int, array<int, true>> $ignoredByUid
+     * @return array<int, int> page uid => tstamp
+     */
+    private function correctedTimestamps(string $table, string $pageField, string $tstampField, array $uids, array $ignoredByUid): array
+    {
+        $crdateField = (string)($GLOBALS['TCA'][$table]['ctrl']['crdate'] ?? '');
+        $lastRelevant = [];
+        foreach (array_chunk($uids, self::CHUNK_SIZE) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_history');
+            $queryBuilder->getRestrictions()->removeAll();
+            $result = $queryBuilder
+                ->select('recuid', 'tstamp', 'actiontype')
+                ->from('sys_history')
+                ->where(
+                    $queryBuilder->expr()->eq('tablename', $queryBuilder->createNamedParameter($table)),
+                    $queryBuilder->expr()->in('recuid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)),
+                )
+                ->executeQuery();
+            while ($row = $result->fetchAssociative()) {
+                $uid = (int)$row['recuid'];
+                $tstamp = (int)$row['tstamp'];
+                if ((int)$row['actiontype'] === self::HISTORY_ACTION_MODIFY && isset($ignoredByUid[$uid][$tstamp])) {
+                    continue;
+                }
+                $lastRelevant[$uid] = max($lastRelevant[$uid] ?? 0, $tstamp);
+            }
+        }
+
+        $timestamps = [];
+        foreach (array_chunk($uids, self::CHUNK_SIZE) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable($table);
+            $queryBuilder->getRestrictions()->removeAll();
+            $fields = array_values(array_unique(array_filter(['uid', $pageField, $tstampField, $crdateField])));
+            try {
+                $result = $queryBuilder
+                    ->select(...$fields)
+                    ->from($table)
+                    ->where($queryBuilder->expr()->in('uid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)))
+                    ->executeQuery();
+            } catch (\Throwable) {
+                return $timestamps;
+            }
+            while ($row = $result->fetchAssociative()) {
+                $uid = (int)$row['uid'];
+                $pageUid = (int)$row[$pageField];
+                if ($pageUid <= 0) {
+                    continue;
+                }
+                $tstamp = (int)$row[$tstampField];
+                if (isset($ignoredByUid[$uid][$tstamp])) {
+                    // tstamp stammt von einer ignorierten Änderung
+                    $tstamp = max($lastRelevant[$uid] ?? 0, $crdateField !== '' ? (int)$row[$crdateField] : 0);
+                }
+                if ($tstamp > 0) {
+                    $timestamps[$pageUid] = max($timestamps[$pageUid] ?? 0, $tstamp);
+                }
             }
         }
         return $timestamps;

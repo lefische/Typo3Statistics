@@ -17,6 +17,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final class ChangeStatisticsCommand extends Command
 {
     private const FORMATS = ['table', 'csv', 'json'];
+    private const DEFAULT_IGNORE_FIELDS = ['is_siteroot'];
 
     public function __construct(
         private readonly ChangeStatisticsService $changeStatisticsService,
@@ -38,6 +39,12 @@ final class ChangeStatisticsCommand extends Command
             ->addOption('site', 's', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Nur diese Site(s): Identifier oder Seiten-UID (mehrfach möglich)')
             ->addOption('table', 't', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Nur diese Tabelle(n) zählen, z. B. pages, tt_content')
             ->addOption('exclude-table', 'x', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Diese Tabelle(n) nicht zählen')
+            ->addOption(
+                'ignore-field',
+                'i',
+                InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
+                'Änderungen, die nur diese Felder betreffen, nicht zählen (Standard: is_siteroot; "none" = alles zählen)',
+            )
             ->addOption('format', 'f', InputOption::VALUE_REQUIRED, 'Ausgabe: table, csv oder json', 'table');
     }
 
@@ -68,24 +75,26 @@ final class ChangeStatisticsCommand extends Command
             return Command::SUCCESS;
         }
 
+        $ignoreFields = $this->resolveIgnoreFields($input);
         $statistics = $this->changeStatisticsService->calculate(
             $roots,
             $source,
             $since,
             $this->splitList($input->getOption('table')),
             $this->splitList($input->getOption('exclude-table')),
+            $ignoreFields,
         );
 
         match ($format) {
             'csv' => $this->renderCsv($output, $statistics),
             'json' => $output->writeln((string)json_encode($this->toJson($statistics, $source, $since), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)),
-            default => $this->renderTable($io, $statistics, $source, $since),
+            default => $this->renderTable($io, $statistics, $source, $since, $ignoreFields),
         };
 
         return Command::SUCCESS;
     }
 
-    private function renderTable(SymfonyStyle $io, array $statistics, string $source, int $since): void
+    private function renderTable(SymfonyStyle $io, array $statistics, string $source, int $since, array $ignoreFields): void
     {
         $io->title('Änderungen pro Seitenbaum');
         $io->text(sprintf(
@@ -128,6 +137,13 @@ final class ChangeStatisticsCommand extends Command
         $io->section('Änderungen pro Monat');
         $io->table($header, $rows);
 
+        if ($statistics['ignored'] > 0) {
+            $io->note(sprintf(
+                '%d Änderung(en) nicht gezählt, weil nur ignorierte Felder geändert wurden (%s).',
+                $statistics['ignored'],
+                implode(', ', $ignoreFields),
+            ));
+        }
         if ($statistics['unassigned'] > 0) {
             $io->note(sprintf(
                 '%d Änderung(en) konnten keinem Seitenbaum zugeordnet werden (z. B. Datensätze auf Root-Ebene wie sys_file,'
@@ -187,8 +203,21 @@ final class ChangeStatisticsCommand extends Command
             'since' => $since > 0 ? date('Y-m', $since) : null,
             'generated' => date('c'),
             'unassigned' => $statistics['unassigned'],
+            'ignored' => $statistics['ignored'],
             'sites' => $sites,
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function resolveIgnoreFields(InputInterface $input): array
+    {
+        $fields = $this->splitList($input->getOption('ignore-field'));
+        if ($fields === []) {
+            return self::DEFAULT_IGNORE_FIELDS;
+        }
+        return in_array('none', $fields, true) ? [] : $fields;
     }
 
     private function resolveSince(InputInterface $input): int

@@ -4,6 +4,8 @@
 -- Wurzeln der Seitenbäume sind hier alle Seiten mit "Als Anfang der Webseite benutzen" (is_siteroot = 1).
 -- Liegt eine Site innerhalb eines anderen Baums, gehören ihre Seiten zur inneren Site.
 -- Übersetzte Seiten werden über l10n_parent dem Baum der Standardsprache zugeordnet.
+-- Änderungen, bei denen nur "Als Anfang der Webseite benutzen" (is_siteroot) umgestellt wurde, werden nicht gezählt
+-- (siehe CTE "ignored"; benötigt die JSON-Funktionen von MySQL >= 8.0 bzw. MariaDB >= 10.2.3).
 --
 -- Jede Abfrage liefert eine einzige Spalte (Spaltenname = Überschrift des Blocks) mit Semikolon-getrennten Werten (erste Zeile = Spaltenköpfe),
 -- die sich direkt als CSV speichern bzw. in Excel einfügen lässt. Titel stehen in Anführungszeichen.
@@ -29,6 +31,20 @@ page_root AS (
     FROM pages p
     JOIN tree t ON t.page_uid = IF(p.sys_language_uid > 0 AND p.l10n_parent > 0, p.l10n_parent, p.uid)
 ),
+ignored AS (
+    -- Änderungen, bei denen ausschließlich "Als Anfang der Webseite benutzen" (is_siteroot) umgestellt wurde.
+    -- Weitere zu ignorierende Felder als zusätzlichen Pfad '$.feldname' in JSON_REMOVE ergänzen
+    -- (und die LIKE-Bedingung entsprechend erweitern).
+    SELECT tablename, recuid, tstamp
+    FROM sys_history
+    WHERE actiontype = 2
+      AND history_data LIKE '%"is_siteroot"%'
+      AND CASE WHEN JSON_VALID(history_data)
+               THEN COALESCE(JSON_LENGTH(JSON_REMOVE(JSON_EXTRACT(history_data, '$.newRecord'),
+                        '$.is_siteroot', '$.tstamp', '$.l10n_diffsource', '$.l10n_state')), 1)
+               ELSE 1
+          END = 0
+),
 changes AS (
     SELECT h.tstamp,
            CASE h.tablename
@@ -39,6 +55,8 @@ changes AS (
     LEFT JOIN tt_content c ON h.tablename = 'tt_content' AND c.uid = h.recuid
     WHERE h.tablename IN ('pages', 'tt_content')
       AND h.tstamp >= UNIX_TIMESTAMP(DATE_FORMAT(CURDATE() - INTERVAL 11 MONTH, '%Y-%m-01'))  -- letzte 12 Monate
+      AND NOT EXISTS (SELECT 1 FROM ignored i WHERE h.actiontype = 2 AND i.tablename = h.tablename
+                                                AND i.recuid = h.recuid AND i.tstamp = h.tstamp)
 ),
 result AS (
     SELECT r.uid                                            AS root_uid,
@@ -78,6 +96,20 @@ page_root AS (
     FROM pages p
     JOIN tree t ON t.page_uid = IF(p.sys_language_uid > 0 AND p.l10n_parent > 0, p.l10n_parent, p.uid)
 ),
+ignored AS (
+    -- Änderungen, bei denen ausschließlich "Als Anfang der Webseite benutzen" (is_siteroot) umgestellt wurde.
+    -- Weitere zu ignorierende Felder als zusätzlichen Pfad '$.feldname' in JSON_REMOVE ergänzen
+    -- (und die LIKE-Bedingung entsprechend erweitern).
+    SELECT tablename, recuid, tstamp
+    FROM sys_history
+    WHERE actiontype = 2
+      AND history_data LIKE '%"is_siteroot"%'
+      AND CASE WHEN JSON_VALID(history_data)
+               THEN COALESCE(JSON_LENGTH(JSON_REMOVE(JSON_EXTRACT(history_data, '$.newRecord'),
+                        '$.is_siteroot', '$.tstamp', '$.l10n_diffsource', '$.l10n_state')), 1)
+               ELSE 1
+          END = 0
+),
 result AS (
     SELECT r.uid                                            AS root_uid,
            r.title                                          AS root_title,
@@ -91,6 +123,9 @@ result AS (
       AND l.error = 0
       AND l.action IN (1, 2, 3, 4, 6)
       AND l.tstamp >= UNIX_TIMESTAMP(DATE_FORMAT(CURDATE() - INTERVAL 11 MONTH, '%Y-%m-01'))
+      -- sys_log kennt die geänderten Felder nicht: über den passenden sys_history-Eintrag ausschließen
+      AND NOT EXISTS (SELECT 1 FROM ignored i WHERE l.action = 2 AND i.tablename = l.tablename
+                                                AND i.recuid = l.recuid AND i.tstamp = l.tstamp)
     GROUP BY r.uid, r.title, monat
 )
 SELECT zeile AS `2) Änderungen pro Monat und Seitenbaum – Backend-Protokoll (sys_log), alle Tabellen, letzte 12 Monate`
@@ -120,8 +155,36 @@ page_root AS (
     FROM pages p
     JOIN tree t ON t.page_uid = IF(p.sys_language_uid > 0 AND p.l10n_parent > 0, p.l10n_parent, p.uid)
 ),
+ignored AS (
+    -- Änderungen, bei denen ausschließlich "Als Anfang der Webseite benutzen" (is_siteroot) umgestellt wurde.
+    -- Weitere zu ignorierende Felder als zusätzlichen Pfad '$.feldname' in JSON_REMOVE ergänzen
+    -- (und die LIKE-Bedingung entsprechend erweitern).
+    SELECT tablename, recuid, tstamp
+    FROM sys_history
+    WHERE actiontype = 2
+      AND history_data LIKE '%"is_siteroot"%'
+      AND CASE WHEN JSON_VALID(history_data)
+               THEN COALESCE(JSON_LENGTH(JSON_REMOVE(JSON_EXTRACT(history_data, '$.newRecord'),
+                        '$.is_siteroot', '$.tstamp', '$.l10n_diffsource', '$.l10n_state')), 1)
+               ELSE 1
+          END = 0
+),
 stamps AS (
-    SELECT uid AS page_uid, tstamp FROM pages
+    -- Stammt der tstamp einer Seite von einer ignorierten Änderung, zählt stattdessen ihre letzte relevante Änderung
+    -- laut sys_history, mindestens aber das Erstellungsdatum.
+    SELECT p.uid AS page_uid,
+           CASE WHEN EXISTS (SELECT 1 FROM ignored i WHERE i.tablename = 'pages' AND i.recuid = p.uid AND i.tstamp = p.tstamp)
+                THEN GREATEST(p.crdate, COALESCE((
+                         SELECT MAX(h.tstamp)
+                         FROM sys_history h
+                         WHERE h.tablename = 'pages'
+                           AND h.recuid = p.uid
+                           AND NOT EXISTS (SELECT 1 FROM ignored i WHERE h.actiontype = 2 AND i.tablename = h.tablename
+                                                                     AND i.recuid = h.recuid AND i.tstamp = h.tstamp)
+                     ), 0))
+                ELSE p.tstamp
+           END AS tstamp
+    FROM pages p
     UNION ALL
     SELECT pid, MAX(tstamp) FROM tt_content GROUP BY pid
 ),
