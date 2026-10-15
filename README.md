@@ -210,3 +210,38 @@ mysql -B datenbank < Resources/Private/Sql/1_changes_per_month_history.sql > aen
 mysql -B datenbank < Resources/Private/Sql/2_changes_per_month_log.sql     > aenderungen_log.csv
 mysql -B datenbank < Resources/Private/Sql/3_last_change_per_tree.sql      > letzte_aenderung.csv
 ```
+
+## Visualisierung: Netzfunke Statistik-Viewer
+
+Im Ordner [`Visualization/`](Visualization/) liegt der **Netzfunke Statistik-Viewer**: eine einzelne HTML-Datei, die die
+CSV-Exporte der SQL-Skripte interaktiv darstellt (Ampel-Übersicht, Heatmap Verein × Monat, Detail je Verein,
+Gesamtentwicklung). Sie läuft komplett offline im Browser, ohne Webserver und ohne externe Abhängigkeiten.
+
+Der Viewer wird in einem eigenen Repository entwickelt (`lefische/Netzfunke_Statistics`) und hier nur als Kopie
+mitgeliefert, unverändert übernommen aus Commit `0aab464` vom 14.10.2026. Änderungen am Viewer bitte dort vornehmen und
+die Dateien anschließend wieder hierher kopieren. Bedienung und Anpassung: [`Visualization/README.md`](Visualization/README.md),
+fachliche Anforderungen: [`Visualization/docs/ANFORDERUNGEN.md`](Visualization/docs/ANFORDERUNGEN.md).
+
+### Schnittstelle: die CSV-Dateien
+
+Viewer und Abfragen sind nur über die CSV-Dateien gekoppelt. Der Viewer liest die Ausgabe von **zwei** SQL-Skripten:
+
+| Datei im Viewer | Erzeugt von | Spalten |
+|---|---|---|
+| Datei A – letzte Änderung je Seitenbaum | `3_last_change_per_tree.sql` | `root_uid;root_title;seiten;letzte_aenderung` |
+| Datei B – Änderungen pro Monat | `1_changes_per_month_history.sql` | `root_uid;root_title;monat;aenderungen;letzte_aenderung_im_monat` |
+
+```bash
+mysql -B datenbank < Resources/Private/Sql/3_last_change_per_tree.sql      > last_change_per_tree.csv
+mysql -B datenbank < Resources/Private/Sql/1_changes_per_month_history.sql > changes_per_month_history.csv
+```
+
+Anschließend `Visualization/netzfunke-statistik.html` im Browser öffnen und beide Dateien hineinziehen.
+
+- Der Viewer erkennt die Dateien **an den Spaltennamen**, nicht am Dateinamen. Die erste Zeile (Überschrift des
+  Skripts) überspringt er und zeigt sie als Datenquelle an.
+- `2_changes_per_month_log.sql` und die CSV-Ausgabe des Befehls `statistics:changes --format=csv` haben andere
+  Spalten und werden vom Viewer **nicht** gelesen.
+- **Wer an den Skripten 1 oder 3 Spaltennamen, Reihenfolge, Trennzeichen oder die Überschriftszeile ändert, muss
+  den Viewer mit anpassen.** Neue Spalten am Ende oder ein anderer Zeitraum (`INTERVAL 11 MONTH`) sind unkritisch.
+- CSV-Dateien werden nicht eingecheckt (`Visualization/.gitignore` schließt `*.csv` aus), da sie Vereinsdaten enthalten.

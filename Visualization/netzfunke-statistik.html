@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Netzfunke Statistik</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='9' width='3' height='6' rx='1' fill='%232a78d6'/%3E%3Crect x='6.5' y='5' width='3' height='10' rx='1' fill='%232a78d6'/%3E%3Crect x='12' y='1' width='3' height='14' rx='1' fill='%232a78d6'/%3E%3C/svg%3E">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-2: #f3f2ee;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11,11,11,0.10);
+  --accent: #2a78d6;
+  --accent-ink: #1c5cab;
+  --series-1: #2a78d6;
+  --median: #52514e;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+  --unknown: #898781;
+  --hm0: #f0efec;
+  --hm1: #cde2fb; --hm2: #9ec5f4; --hm3: #6da7ec; --hm4: #2a78d6; --hm5: #104281;
+  --hm-ink-lo: #0b0b0b; --hm-ink-hi: #ffffff;
+  --shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #232322;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255,255,255,0.10);
+    --accent: #3987e5;
+    --accent-ink: #86b6ef;
+    --series-1: #3987e5;
+    --median: #c3c2b7;
+    --hm0: #232322;
+    --hm1: #0d366b; --hm2: #1c5cab; --hm3: #2a78d6; --hm4: #6da7ec; --hm5: #b7d3f6;
+    --hm-ink-lo: #f0efec; --hm-ink-hi: #0b0b0b;
+    --shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232322;
+  --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781; --grid: #2c2c2a; --axis: #383835;
+  --border: rgba(255,255,255,0.10); --accent: #3987e5; --accent-ink: #86b6ef;
+  --series-1: #3987e5; --median: #c3c2b7; --hm0: #232322;
+  --hm1: #0d366b; --hm2: #1c5cab; --hm3: #2a78d6; --hm4: #6da7ec; --hm5: #b7d3f6;
+  --hm-ink-lo: #f0efec; --hm-ink-hi: #0b0b0b; --shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--page);
+  color: var(--ink);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+button, input, select { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+.wrap { max-width: 1400px; margin: 0 auto; padding: 16px; }
+header.top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+header.top h1 { font-size: 20px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+header.top .sub { color: var(--ink-2); font-size: 13px; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.card + .card { margin-top: 16px; }
+.card h2 { font-size: 15px; margin: 0 0 4px; font-weight: 600; }
+.card .hint { color: var(--ink-2); font-size: 13px; margin: 0 0 12px; }
+
+/* Loader */
+.drop {
+  border: 2px dashed var(--axis); border-radius: 12px; padding: 48px 24px; text-align: center;
+  background: var(--surface); transition: border-color .15s, background .15s;
+}
+.drop.over { border-color: var(--accent); background: var(--surface-2); }
+.drop h2 { margin: 0 0 8px; font-size: 18px; }
+.drop p { margin: 4px 0; color: var(--ink-2); }
+.drop code { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 600;
+}
+.btn.ghost { background: transparent; color: var(--accent-ink); border: 1px solid var(--border); font-weight: 500; padding: 5px 10px; }
+.btn:focus-visible, .chip:focus-visible, .tab:focus-visible, th button:focus-visible, .linkish:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.drop .btn { margin-top: 16px; }
+
+.msgs { margin-top: 12px; }
+.msg { padding: 8px 12px; border-radius: 8px; margin-top: 8px; font-size: 13px; border: 1px solid var(--border); background: var(--surface); }
+.msg.err { border-color: var(--critical); }
+.msg.warn { border-color: var(--warning); }
+
+/* File status */
+.filebar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 13px; color: var(--ink-2); margin-bottom: 12px; }
+.filebar .f { display: inline-flex; gap: 6px; align-items: center; }
+.filebar .f b { color: var(--ink); font-weight: 600; }
+.filebar .ok { color: var(--good); font-weight: 700; }
+.filebar .miss { color: var(--critical); font-weight: 700; }
+
+/* Filters */
+.filters { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 12px; }
+.search { position: relative; }
+.search input {
+  width: 240px; max-width: 100%; padding: 7px 10px 7px 30px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.search svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 5px 10px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface); font-size: 13px;
+}
+.chip[aria-pressed="false"] { opacity: .5; }
+.chip[aria-pressed="false"] .dot { filter: grayscale(1); }
+.chip .n { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.stichtag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); }
+.stichtag select { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); }
+
+/* Tabs */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 16px; overflow-x: auto; }
+.tab {
+  background: none; border: 0; padding: 10px 14px; cursor: pointer; color: var(--ink-2); font-weight: 500;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;
+}
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+
+/* Status */
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.st { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.s-good { background: var(--good); }
+.s-warning { background: var(--warning); }
+.s-serious { background: var(--serious); }
+.s-critical { background: var(--critical); }
+.s-unknown { background: var(--unknown); }
+.st-icon { width: 14px; height: 14px; flex: none; }
+
+/* KPI tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.tile .k { font-size: 12px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+.tile .v { font-size: 26px; font-weight: 650; margin-top: 2px; letter-spacing: -0.01em; }
+.tile .d { font-size: 12px; color: var(--muted); }
+
+/* Tables */
+.tscroll { overflow-x: auto; }
+table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.data th, table.data td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+table.data th { font-weight: 600; color: var(--ink-2); font-size: 12px; position: sticky; top: 0; background: var(--surface); }
+table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.data tbody tr { cursor: pointer; }
+table.data tbody tr:hover, table.data tbody tr:focus-visible { background: var(--surface-2); outline: none; }
+table.data td.name { white-space: normal; min-width: 180px; font-weight: 500; }
+th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+th button .arr { color: var(--muted); font-size: 10px; width: 8px; }
+th[aria-sort] button { color: var(--ink); }
+.uid { color: var(--muted); font-size: 11px; font-weight: 400; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.badge { font-size: 11px; color: var(--ink-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; margin-left: 6px; font-weight: 400; }
+.empty { padding: 32px; text-align: center; color: var(--ink-2); }
+
+/* Heatmap */
+.hm-tools { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 12px; color: var(--ink-2); }
+.legend .sw { display: inline-flex; align-items: center; gap: 4px; }
+.legend .sw i { width: 14px; height: 14px; border-radius: 3px; display: inline-block; border: 1px solid var(--border); }
+table.hm { border-collapse: separate; border-spacing: 2px; font-size: 12px; width: 100%; }
+table.hm th { font-weight: 500; color: var(--ink-2); padding: 4px; white-space: nowrap; }
+table.hm thead th { text-align: center; font-size: 11px; }
+table.hm th.rowh { text-align: left; max-width: 240px; overflow: hidden; text-overflow: ellipsis; position: sticky; left: 0; background: var(--surface); z-index: 1; }
+table.hm th.rowh .linkish { max-width: 230px; overflow: hidden; text-overflow: ellipsis; display: block; }
+table.hm td.c { height: 26px; min-width: 40px; text-align: center; border-radius: 4px; font-variant-numeric: tabular-nums; cursor: default; }
+table.hm td.c:hover, table.hm td.c:focus-visible { outline: 2px solid var(--ink); outline-offset: -1px; }
+table.hm td.sum, table.hm th.sum { text-align: right; padding: 4px 8px; font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+table.hm tfoot th, table.hm tfoot td { border-top: 1px solid var(--axis); padding-top: 6px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; text-align: center; }
+table.hm tfoot th.rowh { text-align: left; }
+.b0 { background: var(--hm0); }
+.b1 { background: var(--hm1); color: var(--hm-ink-lo); }
+.b2 { background: var(--hm2); color: var(--hm-ink-lo); }
+.b3 { background: var(--hm3); color: var(--hm-ink-lo); }
+.b4 { background: var(--hm4); color: var(--hm-ink-hi); }
+.b5 { background: var(--hm5); color: var(--hm-ink-hi); }
+.linkish { all: unset; cursor: pointer; color: var(--ink); }
+.linkish:hover { color: var(--accent-ink); text-decoration: underline; }
+
+/* Detail */
+.det-nav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+.det-nav select { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); max-width: 100%; min-width: 0; flex: 1 1 260px; }
+.det-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-bottom: 12px; }
+.det-head h2 { margin: 0; font-size: 20px; }
+.det-head .meta { color: var(--ink-2); font-size: 13px; }
+
+/* Charts */
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; }
+.grid2 .card + .card { margin-top: 0; }
+.chart { width: 100%; position: relative; }
+.chart svg { display: block; overflow: visible; }
+.chart text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.chart .gl { stroke: var(--grid); stroke-width: 1; shape-rendering: crispEdges; }
+.chart .base { stroke: var(--axis); stroke-width: 1; shape-rendering: crispEdges; }
+.chart .bar { fill: var(--series-1); transition: opacity .12s; }
+.chart .zero { stroke: var(--muted); stroke-width: 2; }
+.chart .hit { fill: transparent; }
+.chart svg:hover .col .bar { opacity: .55; }
+.chart svg .col:hover .bar, .chart svg .col:focus .bar { opacity: 1; }
+.chart .col:focus { outline: none; }
+.chart .col:focus .hit { stroke: var(--accent); stroke-width: 2; }
+.chart .med { stroke: var(--median); stroke-width: 2; fill: none; }
+.chart .medpt { fill: var(--surface); stroke: var(--median); stroke-width: 2; }
+.chart .ln { stroke: var(--series-1); stroke-width: 2; fill: none; stroke-linejoin: round; }
+.chart .pt { fill: var(--series-1); stroke: var(--surface); stroke-width: 2; }
+.chart .xh { stroke: var(--axis); stroke-width: 1; opacity: 0; }
+.chart .col:hover .xh, .chart .col:focus .xh { opacity: 1; }
+.chart .lbl { fill: var(--ink-2); font-size: 11px; }
+.ckey { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); margin-bottom: 8px; align-items: center; }
+.ckey span { display: inline-flex; align-items: center; gap: 6px; }
+.ckey .kb { width: 12px; height: 12px; border-radius: 3px; background: var(--series-1); }
+.ckey .kl { width: 16px; height: 2px; background: var(--median); }
+.mtab { margin-top: 12px; }
+.mtab table.data td, .mtab table.data th { padding: 5px 8px; }
+.mtab table.data tbody tr { cursor: default; }
+
+.spark rect { fill: var(--series-1); }
+.spark line { stroke: var(--axis); stroke-width: 1; }
+
+.hbars { display: grid; grid-template-columns: minmax(120px, max-content) 1fr auto; gap: 6px 10px; align-items: center; font-size: 13px; }
+.hbars .lab { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+.hbars .track { height: 14px; position: relative; }
+.hbars .fill { height: 14px; border-radius: 0 4px 4px 0; background: var(--series-1); min-width: 2px; }
+.hbars .val { font-variant-numeric: tabular-nums; color: var(--ink); text-align: right; font-weight: 600; }
+.hbars .fill.s-good { background: var(--good); }
+.hbars .fill.s-warning { background: var(--warning); }
+.hbars .fill.s-serious { background: var(--serious); }
+.hbars .fill.s-critical { background: var(--critical); }
+.grid2 + .card, .card + .grid2 { margin-top: 16px; }
+
+/* Tooltip */
+.tip {
+  position: fixed; z-index: 50; pointer-events: none; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); padding: 8px 10px;
+  font-size: 12px; max-width: 280px; opacity: 0; transition: opacity .08s;
+}
+.tip.on { opacity: 1; }
+.tip .t1 { font-weight: 650; font-size: 14px; }
+.tip .t2 { color: var(--ink-2); }
+
+footer { color: var(--muted); font-size: 12px; margin-top: 24px; text-align: center; }
+
+@media (max-width: 720px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .search input { width: 100%; }
+  .search { flex: 1 1 100%; }
+  .tile .v { font-size: 22px; }
+}
+@media (forced-colors: active) {
+  .dot, .chart .bar, .hbars .fill { forced-color-adjust: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Netzfunke Statistik</h1>
+    <span class="sub" id="subtitle">Redaktionsaktivität der Vereinsseiten aus TYPO3</span>
+  </header>
+
+  <!-- Laden -->
+  <section id="loader">
+    <div class="drop" id="drop">
+      <h2>CSV-Dateien hierher ziehen</h2>
+      <p>Benötigt werden die beiden TYPO3-Exporte aus diesem Ordner:</p>
+      <p><code>last_change_per_tree.csv</code> und <code>changes_per_month_history.csv</code></p>
+      <p>Beide Dateien können auf einmal ausgewählt werden. Die Daten bleiben auf diesem Rechner.</p>
+      <label class="btn">
+        <input type="file" id="file" accept=".csv,text/csv" multiple hidden>
+        Dateien auswählen …
+      </label>
+    </div>
+    <div class="msgs" id="loadMsgs"></div>
+  </section>
+
+  <!-- App -->
+  <section id="app" hidden>
+    <div class="filebar" id="filebar"></div>
+    <div class="msgs" id="appMsgs"></div>
+
+    <div class="filters" role="group" aria-label="Filter">
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 11l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="search" id="q" placeholder="Verein suchen …" aria-label="Verein suchen">
+      </div>
+      <div class="chips" id="chips" aria-label="Status-Filter"></div>
+      <label class="toggle"><input type="checkbox" id="internal"> Interne Seitenbäume anzeigen</label>
+      <label class="stichtag">Stichtag
+        <select id="stichtag">
+          <option value="data">Datenstand</option>
+          <option value="today">Heute</option>
+        </select>
+      </label>
+    </div>
+
+    <nav class="tabs" role="tablist" aria-label="Ansichten">
+      <button class="tab" role="tab" data-view="uebersicht" id="tab-uebersicht">Ampel-Übersicht</button>
+      <button class="tab" role="tab" data-view="heatmap" id="tab-heatmap">Heatmap</button>
+      <button class="tab" role="tab" data-view="verein" id="tab-verein">Detail je Verein</button>
+      <button class="tab" role="tab" data-view="gesamt" id="tab-gesamt">Gesamtentwicklung</button>
+    </nav>
+
+    <div id="view-uebersicht" role="tabpanel" aria-labelledby="tab-uebersicht"></div>
+    <div id="view-heatmap" role="tabpanel" aria-labelledby="tab-heatmap"></div>
+    <div id="view-verein" role="tabpanel" aria-labelledby="tab-verein"></div>
+    <div id="view-gesamt" role="tabpanel" aria-labelledby="tab-gesamt"></div>
+  </section>
+
+  <footer>Netzfunke Statistik · läuft vollständig offline · keine Daten verlassen diesen Rechner</footer>
+</div>
+
+<div class="tip" id="tip" role="tooltip" aria-hidden="true"></div>
+
+<script>
+(function () {
+'use strict';
+
+/* ================= Konfiguration ================= */
+
+// Interne Seitenbäume (root_uid), standardmäßig ausgeblendet
+const INTERNAL_UIDS = new Set([626, 1240, 3002]);
+
+// Ampel-Schwellen in Tagen seit letzter Änderung
+const STATUS = [
+  { key: 'good',     label: 'aktiv',         max: 30 },
+  { key: 'warning',  label: 'ruhig',         max: 90 },
+  { key: 'serious',  label: 'inaktiv',       max: 180 },
+  { key: 'critical', label: 'eingeschlafen', max: Infinity }
+];
+const STATUS_UNKNOWN = { key: 'unknown', label: 'unbekannt' };
+
+// Heatmap-Stufen: obere Grenze je Stufe
+const HM_BINS = [
+  { max: 5,        label: '1–5' },
+  { max: 20,       label: '6–20' },
+  { max: 50,       label: '21–50' },
+  { max: 150,      label: '51–150' },
+  { max: Infinity, label: '> 150' }
+];
+
+/* ================= Hilfsfunktionen ================= */
+
+const $ = (s, el) => (el || document).querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nf = new Intl.NumberFormat('de-DE');
+const fmtN = n => nf.format(n);
+const pad = n => String(n).padStart(2, '0');
+const fmtDate = d => d ? `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}` : '–';
+const fmtDateTime = d => d ? `${fmtDate(d)}, ${pad(d.getHours())}:${pad(d.getMinutes())} Uhr` : '–';
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+const MONTHS_LONG = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const monthShort = m => { const [y, mo] = m.split('-'); return `${MONTHS_SHORT[+mo - 1]} ${y.slice(2)}`; };
+const monthLong = m => { const [y, mo] = m.split('-'); return `${MONTHS_LONG[+mo - 1]} ${y}`; };
+const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+function parseDateTime(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/.exec((s || '').trim());
+  if (!m) return null;
+  const d = new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+  return isNaN(d) || d.getMonth() !== +m[2] - 1 ? null : d;
+}
+const isInt = s => /^\d+$/.test((s || '').trim());
+
+function median(arr) {
+  if (!arr.length) return 0;
+  const a = arr.slice().sort((x, y) => x - y);
+  const mid = a.length >> 1;
+  return a.length % 2 ? a[mid] : (a[mid - 1] + a[mid]) / 2;
+}
+
+function niceMax(v, ticks) {
+  if (v <= 0) return { max: ticks, step: 1 };
+  const raw = v / ticks;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+  const s = Math.max(1, step);
+  return { max: Math.ceil(v / s) * s, step: s };
+}
+
+/* ================= CSV ================= */
+
+function parseCSV(text, sep) {
+  const rows = [];
+  let row = [], field = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; } else q = false;
+      } else field += c;
+    } else if (c === '"') q = true;
+    else if (c === sep) { row.push(field); field = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(field); rows.push(row); row = []; field = '';
+    } else field += c;
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(f => f.trim() !== ''));
+}
+
+async function readText(file) {
+  const buf = await file.arrayBuffer();
+  let text;
+  try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+  catch (e) { text = new TextDecoder('windows-1252').decode(buf); }
+  return text.replace(/^﻿/, '');
+}
+
+const COLS_A = ['root_uid', 'root_title', 'seiten', 'letzte_aenderung'];
+const COLS_B = ['root_uid', 'root_title', 'monat', 'aenderungen', 'letzte_aenderung_im_monat'];
+
+function parseExport(text, fileName) {
+  const rows = parseCSV(text, ';');
+  if (!rows.length) throw new Error('Die Datei ist leer.');
+  const norm = r => r.map(f => f.trim().toLowerCase());
+  let title = '', hIdx = 0;
+  if (!norm(rows[0]).includes('root_uid')) { title = rows[0].join(';').trim(); hIdx = 1; }
+  const header = norm(rows[hIdx] || []);
+  const has = cols => cols.every(c => header.includes(c));
+  let type = null;
+  if (has(COLS_B)) type = 'B';
+  else if (has(COLS_A)) type = 'A';
+  if (!type) throw new Error('Unbekanntes Format. Erwartet werden die Spalten „' + COLS_A.join(';') + '“ oder „' + COLS_B.join(';') + '“.');
+  const ix = {};
+  header.forEach((h, i) => { ix[h] = i; });
+  const out = [];
+  let bad = 0;
+  for (const r of rows.slice(hIdx + 1)) {
+    const g = k => (r[ix[k]] || '').trim();
+    if (type === 'A') {
+      const last = parseDateTime(g('letzte_aenderung'));
+      if (!isInt(g('root_uid')) || !isInt(g('seiten')) || !last || r.length < header.length) { bad++; continue; }
+      out.push({ uid: +g('root_uid'), name: g('root_title'), pages: +g('seiten'), last });
+    } else {
+      const month = g('monat');
+      const lm = g('letzte_aenderung_im_monat');
+      const last = lm ? parseDateTime(lm) : null;
+      if (!isInt(g('root_uid')) || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || !isInt(g('aenderungen')) || (lm && !last) || r.length < header.length) { bad++; continue; }
+      out.push({ uid: +g('root_uid'), name: g('root_title'), month, n: +g('aenderungen'), last });
+    }
+  }
+  return { type, title, rows: out, bad, fileName };
+}
+
+/* ================= Zustand ================= */
+
+const S = {
+  A: null, B: null,
+  months: [], trees: [], byUid: new Map(),
+  dataDate: null,
+  q: '', status: new Set(STATUS.map(s => s.key).concat('unknown')), internal: false, stichtag: 'data',
+  sort: { key: 'days', dir: 1 },
+  hmSort: { key: 'sum', dir: -1 },
+  view: 'uebersicht', uid: null, showMedian: true
+};
+
+function monthRange(list) {
+  if (!list.length) return [];
+  const sorted = list.slice().sort();
+  let [y, m] = sorted[0].split('-').map(Number);
+  const [ye, me] = sorted[sorted.length - 1].split('-').map(Number);
+  const out = [];
+  while (y < ye || (y === ye && m <= me)) {
+    out.push(`${y}-${pad(m)}`);
+    if (++m > 12) { m = 1; y++; }
+  }
+  return out;
+}
+
+function build() {
+  const map = new Map();
+  const get = (uid, name) => {
+    if (!map.has(uid)) map.set(uid, { uid, name, pages: null, last: null, monthly: new Map() });
+    return map.get(uid);
+  };
+  if (S.A) for (const r of S.A.rows) {
+    const t = get(r.uid, r.name);
+    t.name = r.name; t.pages = r.pages;
+    t.last = r.last;
+  }
+  if (S.B) for (const r of S.B.rows) {
+    const t = get(r.uid, r.name);
+    const cur = t.monthly.get(r.month) || { n: 0, last: null };
+    cur.n += r.n;
+    if (r.last && (!cur.last || r.last > cur.last)) cur.last = r.last;
+    t.monthly.set(r.month, cur);
+  }
+  S.months = S.B ? monthRange(S.B.rows.map(r => r.month)) : [];
+  let maxDate = null;
+  S.trees = [...map.values()].map(t => {
+    const series = S.months.map(m => t.monthly.get(m) || { n: 0, last: null });
+    let last = t.last;
+    // Ohne Datei A: letzte Änderung aus der Monatsdatei ableiten
+    if (!S.A) for (const s of series) if (s.last && (!last || s.last > last)) last = s.last;
+    if (last && (!maxDate || last > maxDate)) maxDate = last;
+    for (const s of series) if (s.last && (!maxDate || s.last > maxDate)) maxDate = s.last;
+    const sum = series.reduce((a, s) => a + s.n, 0);
+    const active = series.filter(s => s.n > 0).length;
+    let peak = -1;
+    series.forEach((s, i) => { if (s.n > 0 && (peak < 0 || s.n > series[peak].n)) peak = i; });
+    return { uid: t.uid, name: t.name, pages: t.pages, last, series, sum, active, peak, internal: INTERNAL_UIDS.has(t.uid) };
+  });
+  S.byUid = new Map(S.trees.map(t => [t.uid, t]));
+  S.dataDate = maxDate;
+  computeStatus();
+}
+
+function stichtag() { return S.stichtag === 'today' || !S.dataDate ? new Date() : S.dataDate; }
+
+function computeStatus() {
+  const ref = startOfDay(stichtag());
+  for (const t of S.trees) {
+    if (!t.last) { t.days = null; t.st = STATUS_UNKNOWN; continue; }
+    t.days = Math.max(0, Math.round((ref - startOfDay(t.last)) / 864e5));
+    t.st = STATUS.find(s => t.days <= s.max);
+  }
+}
+
+// Basismenge: interne Bäume + Suche (ohne Statusfilter)
+function baseTrees() {
+  const q = S.q.trim().toLowerCase();
+  return S.trees.filter(t => (S.internal || !t.internal) &&
+    (!q || t.name.toLowerCase().includes(q) || String(t.uid) === q));
+}
+function visibleTrees() { return baseTrees().filter(t => S.status.has(t.st.key)); }
+
+/* ================= Sortierung ================= */
+
+const collator = new Intl.Collator('de', { sensitivity: 'base', numeric: true });
+const SORTERS = {
+  status: t => STATUS.indexOf(t.st) < 0 ? 99 : STATUS.indexOf(t.st),
+  name: t => t.name,
+  pages: t => t.pages,
+  last: t => t.last ? t.last.getTime() : null,
+  days: t => t.days,
+  sum: t => t.sum,
+  active: t => t.active
+};
+function sortTrees(list, sort) {
+  const f = SORTERS[sort.key];
+  return list.slice().sort((a, b) => {
+    const x = f(a), y = f(b);
+    if (x === null || x === undefined) return (y === null || y === undefined) ? collator.compare(a.name, b.name) : 1;
+    if (y === null || y === undefined) return -1;
+    const c = typeof x === 'string' ? collator.compare(x, y) : x - y;
+    return c !== 0 ? c * sort.dir : collator.compare(a.name, b.name);
+  });
+}
+
+/* ================= Laden ================= */
+
+async function handleFiles(files) {
+  const msgs = [];
+  for (const f of files) {
+    try {
+      const res = parseExport(await readText(f), f.name);
+      S[res.type] = res;
+      if (res.bad) msgs.push({ cls: 'warn', text: `${f.name}: ${res.bad} unplausible Zeile(n) übersprungen.` });
+    } catch (e) {
+      msgs.push({ cls: 'err', text: `${f.name}: ${e.message}` });
+    }
+  }
+  if (S.A || S.B) {
+    build();
+    showApp();
+    $('#appMsgs').innerHTML = msgs.map(m => `<div class="msg ${m.cls}">${esc(m.text)}</div>`).join('');
+    $('#loadMsgs').innerHTML = '';
+  } else {
+    $('#loadMsgs').innerHTML = msgs.map(m => `<div class="msg ${m.cls}">${esc(m.text)}</div>`).join('');
+  }
+}
+
+function setupLoading() {
+  const input = $('#file');
+  input.addEventListener('change', () => { handleFiles([...input.files]); input.value = ''; });
+  const drop = $('#drop');
+  let depth = 0;
+  window.addEventListener('dragenter', e => { e.preventDefault(); depth++; drop.classList.add('over'); });
+  window.addEventListener('dragleave', e => { e.preventDefault(); if (--depth <= 0) { depth = 0; drop.classList.remove('over'); } });
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => {
+    e.preventDefault(); depth = 0; drop.classList.remove('over');
+    const files = [...(e.dataTransfer && e.dataTransfer.files || [])];
+    if (files.length) handleFiles(files);
+  });
+}
+
+function showApp() {
+  $('#loader').hidden = true;
+  $('#app').hidden = false;
+  renderFilebar();
+  renderChips();
+  updateStichtagLabels();
+  readHash();
+  render();
+}
+
+function renderFilebar() {
+  const part = (res, label) => res
+    ? `<span class="f"><span class="ok" aria-hidden="true">✓</span><b>${esc(label)}</b> ${esc(res.fileName)} · ${fmtN(res.rows.length)} Zeilen</span>`
+    : `<span class="f"><span class="miss" aria-hidden="true">✕</span><b>${esc(label)}</b> nicht geladen</span>`;
+  const range = S.months.length ? ` · Zeitraum ${monthLong(S.months[0])} – ${monthLong(S.months[S.months.length - 1])}` : '';
+  $('#filebar').innerHTML =
+    part(S.A, 'Letzte Änderung je Seitenbaum:') +
+    part(S.B, 'Änderungen pro Monat:') +
+    `<span>${esc(range.replace(/^ · /, ''))}</span>` +
+    `<label class="btn ghost"><input type="file" accept=".csv,text/csv" multiple hidden id="file2">Andere Dateien laden …</label>`;
+  const f2 = $('#file2');
+  f2.addEventListener('change', () => { handleFiles([...f2.files]); f2.value = ''; });
+  const titles = [S.A, S.B].filter(Boolean).map(r => r.title).filter(Boolean);
+  $('#subtitle').textContent = titles.length ? 'Quelle: ' + titles.join(' · ') : 'Redaktionsaktivität der Vereinsseiten aus TYPO3';
+}
+
+function statusIcon(key) {
+  // Form + Farbe, damit der Status nicht nur über Farbe erkennbar ist
+  const c = `var(--${key === 'unknown' ? 'unknown' : key})`;
+  switch (key) {
+    case 'good': return `<svg class="st-icon" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="${c}"/><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    case 'warning': return `<svg class="st-icon" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="${c}"/><path d="M4 7h6" stroke="#0b0b0b" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+    case 'serious': return `<svg class="st-icon" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="${c}"/><path d="M7 3.8v4" stroke="#0b0b0b" stroke-width="1.8" stroke-linecap="round"/><circle cx="7" cy="10.2" r="1" fill="#0b0b0b"/></svg>`;
+    case 'critical': return `<svg class="st-icon" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="${c}"/><path d="M4.8 4.8l4.4 4.4M9.2 4.8l-4.4 4.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+    default: return `<svg class="st-icon" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="${c}" stroke-width="1.6"/></svg>`;
+  }
+}
+const statusBadge = st => `<span class="st">${statusIcon(st.key)}${esc(st.label)}</span>`;
+const statusRange = s => {
+  const i = STATUS.indexOf(s);
+  if (i < 0) return 'kein Datum vorhanden';
+  const lo = i === 0 ? 0 : STATUS[i - 1].max + 1;
+  return s.max === Infinity ? `über ${STATUS[i - 1].max} Tage` : `${lo}–${s.max} Tage`;
+};
+
+function renderChips() {
+  const base = baseTrees();
+  const list = STATUS.concat(base.some(t => t.st === STATUS_UNKNOWN) ? [STATUS_UNKNOWN] : []);
+  $('#chips').innerHTML = list.map(s => {
+    const n = base.filter(t => t.st === s).length;
+    return `<button class="chip" data-st="${s.key}" aria-pressed="${S.status.has(s.key)}" data-tip="${esc(s.label + '\n' + statusRange(s) + ' seit der letzten Änderung')}">${statusIcon(s.key)}${esc(s.label)} <span class="n">${n}</span></button>`;
+  }).join('');
+}
+
+function updateStichtagLabels() {
+  const sel = $('#stichtag');
+  sel.options[0].textContent = `Datenstand (${fmtDate(S.dataDate)})`;
+  sel.options[1].textContent = `Heute (${fmtDate(new Date())})`;
+  sel.value = S.stichtag;
+}
+
+/* ================= Navigation ================= */
+
+const VIEWS = ['uebersicht', 'heatmap', 'verein', 'gesamt'];
+function readHash() {
+  const h = decodeURIComponent(location.hash.replace(/^#/, ''));
+  const [v, id] = h.split('/');
+  if (VIEWS.includes(v)) S.view = v;
+  if (v === 'verein' && id && S.byUid.has(+id)) S.uid = +id;
+}
+function go(view, uid) {
+  const h = view === 'verein' && uid != null ? `#verein/${uid}` : `#${view}`;
+  if (location.hash !== h) location.hash = h; else { readHash(); render(); }
+}
+window.addEventListener('hashchange', () => { if (!S.trees.length) return; readHash(); render(); window.scrollTo({ top: 0 }); });
+
+/* ================= Rendern ================= */
+
+function render() {
+  hideTip();
+  for (const v of VIEWS) {
+    $('#view-' + v).hidden = v !== S.view;
+    $('#tab-' + v).setAttribute('aria-selected', String(v === S.view));
+  }
+  renderChips();
+  ({ uebersicht: renderOverview, heatmap: renderHeatmap, verein: renderDetail, gesamt: renderTotal })[S.view]();
+}
+
+function noMonthData(what) {
+  return `<div class="card empty">Für ${what} wird die Datei <b>„Änderungen pro Monat“</b> (<code>changes_per_month_history.csv</code>) benötigt.</div>`;
+}
+
+/* ---------- Ansicht 1: Ampel-Übersicht ---------- */
+
+function sparkline(t) {
+  if (!S.months.length) return '';
+  const w = 96, h = 22, n = S.months.length, gap = 1.5;
+  const bw = (w - gap * (n - 1)) / n;
+  const max = Math.max(1, ...t.series.map(s => s.n));
+  let out = `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><line x1="0" x2="${w}" y1="${h - 0.5}" y2="${h - 0.5}"/>`;
+  t.series.forEach((s, i) => {
+    if (!s.n) return;
+    const bh = Math.max(2, (s.n / max) * (h - 2));
+    out += `<rect x="${(i * (bw + gap)).toFixed(1)}" y="${(h - 1 - bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="1"/>`;
+  });
+  return out + '</svg>';
+}
+const sparkTip = t => t.name + '\n' + S.months.map((m, i) => `${monthShort(m)}: ${fmtN(t.series[i].n)}`).join('\n');
+
+function renderOverview() {
+  const el = $('#view-uebersicht');
+  const base = baseTrees();
+  const list = sortTrees(visibleTrees(), S.sort);
+  const total = base.reduce((a, t) => a + t.sum, 0);
+  const tiles = `<div class="tiles">
+    <div class="tile"><div class="k">Seitenbäume</div><div class="v">${fmtN(base.length)}</div><div class="d">${S.internal ? 'inkl.' : 'ohne'} interne Bäume</div></div>
+    ${STATUS.map(s => `<div class="tile"><div class="k">${statusIcon(s.key)}${esc(s.label)}</div><div class="v">${fmtN(base.filter(t => t.st === s).length)}</div><div class="d">${statusRange(s)}</div></div>`).join('')}
+    ${S.B ? `<div class="tile"><div class="k">Änderungen gesamt</div><div class="v">${fmtN(total)}</div><div class="d">${S.months.length} Monate</div></div>` : ''}
+  </div>`;
+
+  const cols = [
+    { key: 'status', label: 'Status' },
+    { key: 'name', label: 'Verein' },
+    { key: 'pages', label: 'Seiten', num: true },
+    { key: 'last', label: 'Letzte Änderung', num: true },
+    { key: 'days', label: 'Tage seit Änderung', num: true },
+    ...(S.B ? [
+      { key: 'sum', label: `Änderungen (${S.months.length} Mon.)`, num: true },
+      { key: 'active', label: 'Aktive Monate', num: true },
+      { key: null, label: 'Verlauf' }
+    ] : [])
+  ];
+  const head = cols.map(c => {
+    if (!c.key) return `<th>${esc(c.label)}</th>`;
+    const on = S.sort.key === c.key;
+    const aria = on ? ` aria-sort="${S.sort.dir > 0 ? 'ascending' : 'descending'}"` : '';
+    return `<th class="${c.num ? 'num' : ''}"${aria}><button data-sort="${c.key}">${esc(c.label)}<span class="arr">${on ? (S.sort.dir > 0 ? '▲' : '▼') : ''}</span></button></th>`;
+  }).join('');
+  const rows = list.map(t => `<tr tabindex="0" data-uid="${t.uid}">
+      <td>${statusBadge(t.st)}</td>
+      <td class="name">${esc(t.name)}<span class="uid">#${t.uid}</span>${t.internal ? '<span class="badge">intern</span>' : ''}</td>
+      <td class="num">${t.pages == null ? '–' : fmtN(t.pages)}</td>
+      <td class="num">${fmtDate(t.last)}</td>
+      <td class="num">${t.days == null ? '–' : fmtN(t.days)}</td>
+      ${S.B ? `<td class="num">${fmtN(t.sum)}</td>
+      <td class="num">${t.active} / ${S.months.length}</td>
+      <td data-tip="${esc(sparkTip(t))}">${sparkline(t)}</td>` : ''}
+    </tr>`).join('');
+
+  el.innerHTML = tiles + `<div class="card">
+    <h2>Alle Seitenbäume</h2>
+    <p class="hint">${fmtN(list.length)} von ${fmtN(base.length)} angezeigt · Stichtag ${fmtDate(stichtag())} · Klick auf eine Zeile öffnet die Details.</p>
+    ${S.A ? '' : '<p class="hint">Hinweis: Datei „Letzte Änderung je Seitenbaum“ fehlt – letzte Änderung und Ampel werden aus der Monatsdatei abgeleitet, Seitenzahlen fehlen.</p>'}
+    ${list.length ? `<div class="tscroll"><table class="data"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">Keine Seitenbäume für die aktuelle Auswahl.</div>'}
+  </div>`;
+}
+
+/* ---------- Ansicht 2: Heatmap ---------- */
+
+const binOf = n => n <= 0 ? 0 : HM_BINS.findIndex(b => n <= b.max) + 1;
+
+function renderHeatmap() {
+  const el = $('#view-heatmap');
+  if (!S.B) { el.innerHTML = noMonthData('die Heatmap'); return; }
+  const sortKey = S.hmSort.key;
+  const list = sortTrees(visibleTrees(), S.hmSort);
+  const legend = `<div class="legend" aria-label="Legende">Änderungen pro Monat:
+    <span class="sw"><i class="b0"></i>0</span>
+    ${HM_BINS.map((b, i) => `<span class="sw"><i class="b${i + 1}"></i>${b.label}</span>`).join('')}</div>`;
+  const opt = (k, d, l) => `<option value="${k}:${d}"${sortKey === k && S.hmSort.dir === d ? ' selected' : ''}>${l}</option>`;
+  const tools = `<div class="hm-tools">${legend}
+    <label class="stichtag">Sortierung
+      <select id="hmSort">
+        ${opt('sum', -1, 'Meiste Änderungen')}${opt('name', 1, 'Name A–Z')}${opt('last', -1, 'Letzte Änderung (neueste zuerst)')}${opt('active', -1, 'Aktive Monate')}
+      </select></label></div>`;
+  const head = `<tr><th class="rowh">Verein</th>${S.months.map(m => `<th scope="col">${monthShort(m)}</th>`).join('')}<th class="sum">Summe</th></tr>`;
+  const body = list.map(t => `<tr><th class="rowh" scope="row"><button class="linkish" data-open="${t.uid}" title="${esc(t.name)}">${esc(t.name)}</button></th>${
+    t.series.map((s, i) => {
+      const b = binOf(s.n);
+      const tip = `${fmtN(s.n)} Änderung${s.n === 1 ? '' : 'en'}\n${t.name} · ${monthLong(S.months[i])}` + (s.last ? `\nLetzte Änderung: ${fmtDateTime(s.last)}` : '');
+      return `<td class="c b${b}" tabindex="-1" data-tip="${esc(tip)}">${s.n ? fmtN(s.n) : ''}</td>`;
+    }).join('')}<td class="sum">${fmtN(t.sum)}</td></tr>`).join('');
+  const sums = S.months.map((m, i) => list.reduce((a, t) => a + t.series[i].n, 0));
+  const foot = `<tr><th class="rowh">Summe (${list.length})</th>${sums.map(n => `<td>${fmtN(n)}</td>`).join('')}<td class="sum">${fmtN(sums.reduce((a, b) => a + b, 0))}</td></tr>`;
+  el.innerHTML = `<div class="card"><h2>Änderungen je Verein und Monat</h2>
+    <p class="hint">Farbstufen statt linearer Skala, damit Ausreißer die übrigen Werte nicht überdecken. Leere Felder = keine Änderung. Klick auf den Namen öffnet die Details.</p>
+    ${tools}
+    ${list.length ? `<div class="tscroll"><table class="hm"><thead>${head}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table></div>` : '<div class="empty">Keine Seitenbäume für die aktuelle Auswahl.</div>'}
+  </div>`;
+  $('#hmSort').addEventListener('change', e => {
+    const [k, d] = e.target.value.split(':');
+    S.hmSort = { key: k, dir: +d };
+    renderHeatmap();
+  });
+}
+
+/* ---------- Diagramme (SVG) ---------- */
+
+function chartWidth(el) { return Math.max(280, Math.floor(el.clientWidth || 640)); }
+
+function barChart(el, { labels, values, tips, overlay, height = 240 }) {
+  const W = chartWidth(el), H = height;
+  const m = { t: 10, r: 8, b: 26, l: 40 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const maxV = Math.max(1, ...values, ...(overlay || []));
+  const { max, step } = niceMax(maxV, 4);
+  const y = v => m.t + ih - (v / max) * ih;
+  const n = values.length, slot = iw / n;
+  const bw = Math.max(4, Math.min(48, slot - 2 - Math.max(2, slot * 0.25)));
+  let s = `<svg width="${W}" height="${H}" role="img">`;
+  for (let v = 0; v <= max + 1e-9; v += step) {
+    s += `<line class="${v === 0 ? 'base' : 'gl'}" x1="${m.l}" x2="${W - m.r}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/>`;
+    s += `<text x="${m.l - 6}" y="${(y(v) + 3.5).toFixed(1)}" text-anchor="end">${fmtN(v)}</text>`;
+  }
+  const every = Math.ceil(n / Math.max(1, Math.floor(iw / 48)));
+  values.forEach((v, i) => {
+    const cx = m.l + slot * i + slot / 2, x = cx - bw / 2;
+    const top = y(v), hgt = m.t + ih - top;
+    s += `<g class="col" tabindex="0" data-tip="${esc(tips[i])}"><rect class="hit" x="${(m.l + slot * i).toFixed(1)}" y="${m.t}" width="${slot.toFixed(1)}" height="${ih}"/>`;
+    if (v > 0) {
+      const r = Math.min(4, hgt, bw / 2);
+      s += `<path class="bar" d="M${x.toFixed(1)},${(top + hgt).toFixed(1)}V${(top + r).toFixed(1)}Q${x.toFixed(1)},${top.toFixed(1)} ${(x + r).toFixed(1)},${top.toFixed(1)}H${(x + bw - r).toFixed(1)}Q${(x + bw).toFixed(1)},${top.toFixed(1)} ${(x + bw).toFixed(1)},${(top + r).toFixed(1)}V${(top + hgt).toFixed(1)}Z"/>`;
+    } else {
+      s += `<line class="zero" x1="${(cx - bw / 2 + 2).toFixed(1)}" x2="${(cx + bw / 2 - 2).toFixed(1)}" y1="${(m.t + ih - 1).toFixed(1)}" y2="${(m.t + ih - 1).toFixed(1)}"/>`;
+    }
+    s += '</g>';
+    if (i % every === 0) s += `<text x="${cx.toFixed(1)}" y="${H - 8}" text-anchor="middle">${esc(labels[i])}</text>`;
+  });
+  if (overlay) {
+    const pts = overlay.map((v, i) => [m.l + slot * i + slot / 2, y(v)]);
+    s += `<polyline class="med" points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" pointer-events="none"/>`;
+    s += pts.map(p => `<circle class="medpt" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" pointer-events="none"/>`).join('');
+  }
+  el.innerHTML = s + '</svg>';
+}
+
+function lineChart(el, { labels, values, tips, height = 240, maxHint }) {
+  const W = chartWidth(el), H = height;
+  const m = { t: 12, r: 12, b: 26, l: 40 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const { max, step } = niceMax(Math.max(1, maxHint || 0, ...values), 4);
+  const y = v => m.t + ih - (v / max) * ih;
+  const n = values.length, slot = iw / n;
+  let s = `<svg width="${W}" height="${H}" role="img">`;
+  for (let v = 0; v <= max + 1e-9; v += step) {
+    s += `<line class="${v === 0 ? 'base' : 'gl'}" x1="${m.l}" x2="${W - m.r}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/>`;
+    s += `<text x="${m.l - 6}" y="${(y(v) + 3.5).toFixed(1)}" text-anchor="end">${fmtN(v)}</text>`;
+  }
+  const pts = values.map((v, i) => [m.l + slot * i + slot / 2, y(v)]);
+  s += `<polyline class="ln" points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>`;
+  const every = Math.ceil(n / Math.max(1, Math.floor(iw / 48)));
+  values.forEach((v, i) => {
+    const [cx, cy] = pts[i];
+    s += `<g class="col" tabindex="0" data-tip="${esc(tips[i])}"><rect class="hit" x="${(m.l + slot * i).toFixed(1)}" y="${m.t}" width="${slot.toFixed(1)}" height="${ih}"/>`;
+    s += `<line class="xh" x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${m.t}" y2="${m.t + ih}"/>`;
+    s += `<circle class="pt" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5"/></g>`;
+    if (i % every === 0) s += `<text x="${cx.toFixed(1)}" y="${H - 8}" text-anchor="middle">${esc(labels[i])}</text>`;
+  });
+  // Endpunkt direkt beschriften
+  const lp = pts[pts.length - 1];
+  if (lp) s += `<text class="lbl" x="${lp[0].toFixed(1)}" y="${(lp[1] - 10).toFixed(1)}" text-anchor="middle">${fmtN(values[values.length - 1])}</text>`;
+  el.innerHTML = s + '</svg>';
+}
+
+function monthTable(rows) {
+  return `<div class="mtab tscroll"><table class="data"><thead><tr><th></th>${S.months.map(m => `<th class="num">${monthShort(m)}</th>`).join('')}</tr></thead><tbody>${
+    rows.map(r => `<tr><th>${esc(r.label)}</th>${r.values.map(v => `<td class="num">${r.fmt ? r.fmt(v) : fmtN(v)}</td>`).join('')}</tr>`).join('')
+  }</tbody></table></div>`;
+}
+
+/* ---------- Ansicht 3: Detail ---------- */
+
+function renderDetail() {
+  const el = $('#view-verein');
+  const order = sortTrees(visibleTrees(), S.sort);
+  if (S.uid == null || !S.byUid.has(S.uid)) S.uid = order.length ? order[0].uid : (S.trees[0] && S.trees[0].uid);
+  const t = S.byUid.get(S.uid);
+  if (!t) { el.innerHTML = '<div class="card empty">Keine Daten.</div>'; return; }
+  const all = sortTrees(S.trees.filter(x => S.internal || !x.internal || x.uid === t.uid), { key: 'name', dir: 1 });
+  const pos = order.findIndex(x => x.uid === t.uid);
+  const prev = pos > 0 ? order[pos - 1] : null;
+  const next = pos >= 0 && pos < order.length - 1 ? order[pos + 1] : null;
+
+  const nav = `<div class="det-nav">
+    <button class="btn ghost" id="dPrev" ${prev ? '' : 'disabled'} aria-label="Vorheriger Verein">← ${prev ? esc(prev.name) : 'Vorheriger'}</button>
+    <select id="dSel" aria-label="Verein auswählen">${all.map(x => `<option value="${x.uid}"${x.uid === t.uid ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+    <button class="btn ghost" id="dNext" ${next ? '' : 'disabled'} aria-label="Nächster Verein">${next ? esc(next.name) : 'Nächster'} →</button>
+  </div>`;
+  const head = `<div class="det-head"><h2>${esc(t.name)}</h2>${statusBadge(t.st)}
+    <span class="meta">#${t.uid}${t.internal ? ' · intern' : ''} · ${t.pages == null ? '–' : fmtN(t.pages)} Seiten · letzte Änderung ${fmtDateTime(t.last)}${t.days == null ? '' : ` · vor ${fmtN(t.days)} Tag${t.days === 1 ? '' : 'en'}`}</span></div>`;
+
+  if (!S.B) { el.innerHTML = nav + `<div class="card">${head}</div>` + noMonthData('den Monatsverlauf'); bindDetail(prev, next); return; }
+
+  const n = S.months.length;
+  const tiles = `<div class="tiles">
+    <div class="tile"><div class="k">Änderungen (${n} Monate)</div><div class="v">${fmtN(t.sum)}</div></div>
+    <div class="tile"><div class="k">Ø pro Monat</div><div class="v">${fmtN(Math.round(t.sum / n * 10) / 10)}</div></div>
+    <div class="tile"><div class="k">Aktivster Monat</div><div class="v">${t.peak >= 0 ? monthShort(S.months[t.peak]) : '–'}</div><div class="d">${t.peak >= 0 ? fmtN(t.series[t.peak].n) + ' Änderungen' : 'keine Änderungen'}</div></div>
+    <div class="tile"><div class="k">Aktive Monate</div><div class="v">${t.active} / ${n}</div></div>
+  </div>`;
+  // Median über alle Vereine (interne nur, wenn eingeblendet)
+  const peers = S.trees.filter(x => S.internal || !x.internal);
+  const med = S.months.map((m, i) => median(peers.map(x => x.series[i].n)));
+  const tips = t.series.map((s, i) => `${fmtN(s.n)} Änderung${s.n === 1 ? '' : 'en'}\n${monthLong(S.months[i])}` +
+    (s.last ? `\nLetzte Änderung: ${fmtDateTime(s.last)}` : '') + (S.showMedian ? `\nMedian aller Vereine: ${fmtN(med[i])}` : ''));
+
+  el.innerHTML = nav + `<div class="card">${head}${tiles}
+    <div class="ckey"><span><i class="kb"></i>Änderungen pro Monat</span>${S.showMedian ? '<span><i class="kl"></i>Median aller Vereine</span>' : ''}
+      <label class="toggle"><input type="checkbox" id="dMed"${S.showMedian ? ' checked' : ''}> Median anzeigen</label></div>
+    <div class="chart" id="dChart"></div>
+    ${monthTable([{ label: 'Änderungen', values: t.series.map(s => s.n) }].concat(S.showMedian ? [{ label: 'Median', values: med }] : []))}
+  </div>`;
+  barChart($('#dChart'), { labels: S.months.map(monthShort), values: t.series.map(s => s.n), tips, overlay: S.showMedian ? med : null, height: 260 });
+  $('#dMed').addEventListener('change', e => { S.showMedian = e.target.checked; renderDetail(); });
+  bindDetail(prev, next);
+}
+function bindDetail(prev, next) {
+  $('#dSel').addEventListener('change', e => go('verein', +e.target.value));
+  if (prev) $('#dPrev').addEventListener('click', () => go('verein', prev.uid));
+  if (next) $('#dNext').addEventListener('click', () => go('verein', next.uid));
+}
+
+/* ---------- Ansicht 4: Gesamtentwicklung ---------- */
+
+function renderTotal() {
+  const el = $('#view-gesamt');
+  const list = visibleTrees();
+  const statusCard = () => {
+    const base = baseTrees();
+    const maxC = Math.max(1, ...STATUS.map(s => base.filter(t => t.st === s).length));
+    return `<div class="card"><h2>Verteilung nach Status</h2><p class="hint">${fmtN(base.length)} Seitenbäume · Stichtag ${fmtDate(stichtag())}</p>
+      <div class="hbars">${STATUS.map(s => {
+        const c = base.filter(t => t.st === s).length;
+        return `<span class="lab">${statusBadge(s)} <span class="uid">${statusRange(s)}</span></span><span class="track"><span class="fill s-${s.key}" style="display:block;width:${(c / maxC * 100).toFixed(1)}%"></span></span><span class="val">${fmtN(c)}</span>`;
+      }).join('')}</div></div>`;
+  };
+  if (!S.B) { el.innerHTML = noMonthData('die Gesamtentwicklung') + statusCard(); return; }
+  const sums = S.months.map((m, i) => list.reduce((a, t) => a + t.series[i].n, 0));
+  const act = S.months.map((m, i) => list.filter(t => t.series[i].n > 0).length);
+  const top = list.slice().sort((a, b) => b.sum - a.sum || collator.compare(a.name, b.name)).slice(0, 10).filter(t => t.sum > 0);
+  const maxTop = Math.max(1, ...top.map(t => t.sum));
+
+  el.innerHTML = `<div class="grid2">
+      <div class="card"><h2>Änderungen pro Monat</h2><p class="hint">Summe über ${fmtN(list.length)} Seitenbäume · gesamt ${fmtN(sums.reduce((a, b) => a + b, 0))}</p><div class="chart" id="gSum"></div></div>
+      <div class="card"><h2>Aktive Vereine pro Monat</h2><p class="hint">Seitenbäume mit mindestens einer Änderung im Monat</p><div class="chart" id="gAct"></div></div>
+    </div>
+    <div class="card">${monthTable([{ label: 'Änderungen', values: sums }, { label: 'Aktive Vereine', values: act }])}</div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h2>Top 10 nach Änderungen</h2><p class="hint">Im gesamten Zeitraum · Klick öffnet die Details</p>
+        ${top.length ? `<div class="hbars">${top.map(t => `<button class="linkish lab" data-open="${t.uid}" title="${esc(t.name)}">${esc(t.name)}</button><span class="track" data-tip="${esc(fmtN(t.sum) + ' Änderungen\n' + t.name)}"><span class="fill" style="display:block;width:${(t.sum / maxTop * 100).toFixed(1)}%"></span></span><span class="val">${fmtN(t.sum)}</span>`).join('')}</div>` : '<div class="empty">Keine Änderungen in der Auswahl.</div>'}
+      </div>
+      ${statusCard()}
+    </div>`;
+  barChart($('#gSum'), {
+    labels: S.months.map(monthShort), values: sums,
+    tips: sums.map((v, i) => `${fmtN(v)} Änderungen\n${monthLong(S.months[i])}\n${fmtN(act[i])} aktive Vereine`)
+  });
+  lineChart($('#gAct'), {
+    labels: S.months.map(monthShort), values: act, maxHint: Math.min(list.length, Math.max(...act) + 2),
+    tips: act.map((v, i) => `${fmtN(v)} aktive Vereine\n${monthLong(S.months[i])}\nvon ${fmtN(list.length)} Seitenbäumen`)
+  });
+}
+
+/* ================= Tooltip ================= */
+
+const tip = $('#tip');
+function showTip(text, x, y) {
+  const lines = text.split('\n');
+  tip.textContent = '';
+  lines.forEach((l, i) => {
+    const d = document.createElement('div');
+    d.className = i === 0 ? 't1' : 't2';
+    d.textContent = l;
+    tip.appendChild(d);
+  });
+  tip.classList.add('on');
+  const r = tip.getBoundingClientRect();
+  let left = x + 14, top = y + 14;
+  if (left + r.width > window.innerWidth - 8) left = x - r.width - 14;
+  if (top + r.height > window.innerHeight - 8) top = y - r.height - 14;
+  tip.style.left = Math.max(8, left) + 'px';
+  tip.style.top = Math.max(8, top) + 'px';
+}
+function hideTip() { tip.classList.remove('on'); }
+document.addEventListener('pointermove', e => {
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (t) showTip(t.getAttribute('data-tip'), e.clientX, e.clientY); else hideTip();
+});
+document.addEventListener('focusin', e => {
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (t) { const r = t.getBoundingClientRect(); showTip(t.getAttribute('data-tip'), r.left + r.width / 2, r.bottom); } else hideTip();
+});
+document.addEventListener('scroll', hideTip, true);
+
+/* ================= Events ================= */
+
+function bindUI() {
+  $('#q').addEventListener('input', e => { S.q = e.target.value; render(); });
+  $('#internal').addEventListener('change', e => { S.internal = e.target.checked; render(); });
+  $('#stichtag').addEventListener('change', e => { S.stichtag = e.target.value; computeStatus(); render(); });
+  $('#chips').addEventListener('click', e => {
+    const b = e.target.closest('[data-st]');
+    if (!b) return;
+    const k = b.dataset.st;
+    if (S.status.has(k)) S.status.delete(k); else S.status.add(k);
+    render();
+  });
+  document.querySelector('.tabs').addEventListener('click', e => {
+    const b = e.target.closest('[data-view]');
+    if (b) go(b.dataset.view, b.dataset.view === 'verein' ? S.uid : null);
+  });
+  document.querySelector('.tabs').addEventListener('keydown', e => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const i = VIEWS.indexOf(S.view) + (e.key === 'ArrowRight' ? 1 : -1);
+    const v = VIEWS[(i + VIEWS.length) % VIEWS.length];
+    go(v, v === 'verein' ? S.uid : null);
+    setTimeout(() => $('#tab-' + v).focus(), 0);
+  });
+  $('#view-uebersicht').addEventListener('click', e => {
+    const s = e.target.closest('[data-sort]');
+    if (s) {
+      const k = s.dataset.sort;
+      S.sort = S.sort.key === k ? { key: k, dir: -S.sort.dir } : { key: k, dir: ['sum', 'active', 'pages', 'last'].includes(k) ? -1 : 1 };
+      renderOverview();
+      const nb = document.querySelector(`#view-uebersicht [data-sort="${k}"]`);
+      if (nb) nb.focus();
+      return;
+    }
+    const tr = e.target.closest('tr[data-uid]');
+    if (tr) go('verein', +tr.dataset.uid);
+  });
+  $('#view-uebersicht').addEventListener('keydown', e => {
+    const tr = e.target.closest('tr[data-uid]');
+    if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go('verein', +tr.dataset.uid); }
+  });
+  document.addEventListener('click', e => {
+    const o = e.target.closest('[data-open]');
+    if (o) go('verein', +o.dataset.open);
+  });
+  let rt;
+  window.addEventListener('resize', () => {
+    clearTimeout(rt);
+    rt = setTimeout(() => { if (S.trees.length && (S.view === 'verein' || S.view === 'gesamt')) render(); }, 150);
+  });
+}
+
+setupLoading();
+bindUI();
+})();
+</script>
+</body>
+</html>
