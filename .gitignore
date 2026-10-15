@@ -2,3 +2,6 @@
 /composer.lock
 /public/
 /var/
+
+# CSV-Exporte enthalten Vereinsdaten und werden nicht eingecheckt
+*.csv
