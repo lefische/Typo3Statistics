@@ -1,11 +1,11 @@
-# Anforderungen: Netzfunke Statistik-Viewer
+# Anforderungen: TYPO3 Statistik-Viewer
 
 **Status:** v1.0 (abgestimmt)
 **Stand:** 2026-10-14
 
 ## 1. Ziel
 
-Ein Werkzeug für das **Netzfunke-Team (intern)**, das die aus TYPO3 exportierten Statistiken interaktiv darstellt. Es soll schnell zeigen:
+Ein Werkzeug für das **TYPO3-Team (intern)**, das die aus TYPO3 exportierten Statistiken interaktiv darstellt. Es soll schnell zeigen:
 
 - welche Vereine ihre Seiten aktiv pflegen,
 - welche Vereine „eingeschlafen“ sind und vielleicht Unterstützung brauchen,
@@ -15,7 +15,7 @@ Ein Werkzeug für das **Netzfunke-Team (intern)**, das die aus TYPO3 exportierte
 
 | # | Anforderung |
 |---|---|
-| R1 | Das Tool ist **eine einzige HTML-Datei** (`netzfunke-statistik.html`). CSS, JavaScript, Icons und Grafiken sind vollständig eingebettet. |
+| R1 | Das Tool ist **eine einzige HTML-Datei** (`typo3-statistik.html`). CSS, JavaScript, Icons und Grafiken sind vollständig eingebettet. |
 | R2 | Es gibt **keine externen Abhängigkeiten**: kein CDN, keine Webfonts aus dem Netz. Das Tool funktioniert komplett offline. |
 | R3 | Die Datei wird **lokal per Doppelklick** geöffnet (`file://`). Ein Webserver ist nicht nötig. |
 | R4 | Die CSV-Dateien liegen im selben Verzeichnis. Weil Browser unter `file://` kein automatisches Nachladen erlauben, werden sie **per Drag & Drop oder Dateiauswahl** geladen. Beide Dateien können gleichzeitig ausgewählt werden. |
@@ -86,7 +86,7 @@ Die Angabe „Tage seit letzter Änderung“ wird relativ zu einem **Stichtag** 
 |---|---|
 | G1 | Bereich zum Laden der CSVs (Drag & Drop + Button). Danach eine kompakte Anzeige der geladenen Dateien mit Zeilenzahl und Option „neu laden“. |
 | G2 | **Suchfeld** nach Vereinsname, wirkt auf alle Ansichten. |
-| G3 | Schalter **„Interne Seitenbäume anzeigen“**, standardmäßig **aus**. Intern sind per Ausschlussliste: `Netzfunke Serverwartung` (626), `Schulung` (1240), `Beispielseite Vereine` (3002). Die Liste steht als Konstante im Code (über `root_uid`). „Netzfunke Burgebrach“ (2461) ist ein Verein und gehört nicht dazu. |
+| G3 | Schalter **„Interne Seitenbäume anzeigen“**, standardmäßig **aus**. Intern sind per Ausschlussliste: `TYPO3 Serverwartung` (626), `Schulung` (1240), `Beispielseite Vereine` (3002). Die Liste steht als Konstante im Code (über `root_uid`). „TYPO3 Burgebrach“ (2461) ist ein Verein und gehört nicht dazu. |
 | G4 | Filter nach Ampelstatus (grün/gelb/rot/grau). |
 | G5 | Auswahl des Stichtags (siehe 3.4). |
 
@@ -180,7 +180,7 @@ Wird aus Ansicht 1 oder 2 geöffnet oder über eine Auswahlliste.
 | # | Frage | Entscheidung |
 |---|---|---|
 | 1 | Ampel-Schwellen | 30 / 90 / 180 Tage wie vorgeschlagen |
-| 2 | Interne Bäume | 626, 1240, 3002. „Netzfunke Burgebrach“ (2461) ist ein Verein. |
+| 2 | Interne Bäume | 626, 1240, 3002. „TYPO3 Burgebrach“ (2461) ist ein Verein. |
 | 3 | Maßgeblicher Zeitstempel für „letzte Änderung“ | Datei A |
 | 4 | Weitere Abfragen (z. B. „2)“) | Keine |
 | 5 | CSVs als Testdaten im Repository | Nein |

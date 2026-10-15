@@ -211,14 +211,14 @@ mysql -B datenbank < Resources/Private/Sql/2_changes_per_month_log.sql     > aen
 mysql -B datenbank < Resources/Private/Sql/3_last_change_per_tree.sql      > letzte_aenderung.csv
 ```
 
-## Visualisierung: Netzfunke Statistik-Viewer
+## Visualisierung: TYPO3 Statistik-Viewer
 
-Im Ordner [`Visualization/`](Visualization/) liegt der **Netzfunke Statistik-Viewer**: eine einzelne HTML-Datei, die die
+Im Ordner [`Visualization/`](Visualization/) liegt der **TYPO3 Statistik-Viewer**: eine einzelne HTML-Datei, die die
 CSV-Exporte der SQL-Skripte interaktiv darstellt (Ampel-Übersicht, Heatmap Verein × Monat, Detail je Verein,
 Gesamtentwicklung). Sie läuft komplett offline im Browser, ohne Webserver und ohne externe Abhängigkeiten.
 
-Der Viewer wird in einem eigenen Repository entwickelt (`lefische/Netzfunke_Statistics`) und hier nur als Kopie
-mitgeliefert, unverändert übernommen aus Commit `0aab464` vom 14.10.2026. Änderungen am Viewer bitte dort vornehmen und
+Der Viewer wird in einem eigenen Repository entwickelt und hier als Kopie mitgeliefert (Stand: Commit `0aab464` vom
+14.10.2026; nur Dateiname und Produktname auf „TYPO3 Statistik“ angepasst). Änderungen am Viewer bitte dort vornehmen und
 die Dateien anschließend wieder hierher kopieren. Bedienung und Anpassung: [`Visualization/README.md`](Visualization/README.md),
 fachliche Anforderungen: [`Visualization/docs/ANFORDERUNGEN.md`](Visualization/docs/ANFORDERUNGEN.md).
 
@@ -236,7 +236,7 @@ mysql -B datenbank < Resources/Private/Sql/3_last_change_per_tree.sql      > las
 mysql -B datenbank < Resources/Private/Sql/1_changes_per_month_history.sql > changes_per_month_history.csv
 ```
 
-Anschließend `Visualization/netzfunke-statistik.html` im Browser öffnen und beide Dateien hineinziehen.
+Anschließend `Visualization/typo3-statistik.html` im Browser öffnen und beide Dateien hineinziehen.
 
 - Der Viewer erkennt die Dateien **an den Spaltennamen**, nicht am Dateinamen. Die erste Zeile (Überschrift des
   Skripts) überspringt er und zeigt sie als Datenquelle an.

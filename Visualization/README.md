@@ -1,10 +1,10 @@
-# Netzfunke Statistik
+# TYPO3 Statistik
 
 Interaktive Auswertung der TYPO3-Exporte zur Redaktionsaktivität der Vereinsseiten.
 
 ## Benutzung
 
-1. `netzfunke-statistik.html` in den Ordner mit den CSV-Exporten legen.
+1. `typo3-statistik.html` in den Ordner mit den CSV-Exporten legen.
 2. Die HTML-Datei per Doppelklick im Browser öffnen.
 3. `last_change_per_tree.csv` und `changes_per_month_history.csv` hineinziehen oder über „Dateien auswählen …“ laden.
 
