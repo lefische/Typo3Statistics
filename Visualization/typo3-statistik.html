@@ -260,6 +260,89 @@ table.hm tfoot th.rowh { text-align: left; }
 
 footer { color: var(--muted); font-size: 12px; margin-top: 24px; text-align: center; }
 
+/* Kopfzeile mit Einstellungen */
+.topbar { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.topbar h1 { font-size: 20px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+.topbar .meta { color: var(--ink-2); font-size: 13px; }
+.topbar .spacer { flex: 1; }
+.settings { position: relative; }
+.settings > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font-size: 13px; color: var(--ink-2); }
+.settings > summary::-webkit-details-marker { display: none; }
+.settings[open] > summary { color: var(--ink); border-color: var(--axis); }
+.settings > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.settings .panel { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: 380px; max-width: calc(100vw - 32px);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); padding: 14px 16px;
+  display: grid; gap: 14px; font-size: 13px; }
+.settings .panel h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.settings .panel .src { color: var(--muted); font-size: 12px; margin: -2px 0 4px 20px; }
+.settings .filebar { display: grid; gap: 2px; margin: 0; }
+
+/* Lage */
+.tiles.st5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.tile.clk { cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.tile.clk:hover { border-color: var(--axis); background: var(--surface-2); }
+.tile.clk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.alist { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; column-gap: 0; align-items: center; }
+.alist .row { display: contents; cursor: pointer; }
+.alist .row > * { padding: 7px 8px; border-bottom: 1px solid var(--grid); height: 100%; display: flex; align-items: center; }
+.alist .row:hover > *, .alist .row:focus-visible > * { background: var(--surface-2); }
+.alist .row:focus-visible { outline: none; }
+.alist .nm { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block !important; line-height: 22px; }
+.alist .rel { color: var(--ink); font-variant-numeric: tabular-nums; justify-content: flex-end; white-space: nowrap; }
+.alist .dt { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.alist .row > :first-child { padding-left: 6px; }
+.alist .row > :last-child { padding-right: 6px; }
+.card.grp { margin-top: 16px; }
+.grp h2 { display: flex; align-items: center; gap: 8px; }
+.grp h2 .n, .cnt { color: var(--ink-2); font-weight: 500; }
+details.grp > summary { list-style: none; cursor: pointer; }
+details.grp > summary::-webkit-details-marker { display: none; }
+details.grp > summary h2 { margin: 0; }
+details.grp > summary h2::after { content: 'anzeigen'; margin-left: auto; color: var(--accent-ink); font-size: 13px; font-weight: 500; }
+details.grp[open] > summary h2::after { content: 'ausblenden'; }
+details.grp[open] > summary { margin-bottom: 4px; }
+.allgood { display: flex; gap: 8px; align-items: center; color: var(--ink-2); }
+
+/* Vereine: Liste + Detail */
+.split { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; align-items: start; }
+.card.vlist { padding: 12px; position: sticky; top: 8px; }
+.vtools { display: grid; gap: 8px; margin-bottom: 8px; }
+.vtools .search input { width: 100%; }
+.vtools .row2 { display: flex; gap: 8px; align-items: center; justify-content: space-between; font-size: 12px; color: var(--ink-2); }
+.vtools select { padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); font-size: 12px; }
+.vtools .chip { padding: 3px 8px; font-size: 12px; }
+.vrows { max-height: calc(100vh - 250px); min-height: 200px; overflow: auto; margin: 0 -4px; padding: 0 4px; }
+.vrow { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px;
+  align-items: center; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.vrow:hover { background: var(--surface-2); }
+.vrow[aria-current="true"] { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--accent); font-weight: 600; }
+.vrow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.vrow .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vrow .rel { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 400; }
+.det-head { margin-bottom: 2px; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 32px; margin: 8px 0 16px; padding: 12px 0; border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid); }
+.stats div { display: grid; }
+.stats .k { font-size: 12px; color: var(--ink-2); }
+.stats .v { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.stats .d { font-size: 12px; color: var(--muted); }
+details.more { margin-top: 10px; font-size: 13px; }
+details.more > summary { cursor: pointer; color: var(--accent-ink); width: max-content; }
+
+/* Verlauf */
+.hm-compact td.c { height: 20px; min-width: 26px; font-size: 0; }
+.hm-compact.nums td.c { font-size: 11px; }
+.hm-tools .tg { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+
+@media (max-width: 960px) {
+  .split { grid-template-columns: 1fr; }
+  .card.vlist { position: static; }
+  .vrows { max-height: 320px; }
+  .tiles.st5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .alist { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .alist .dt, .alist .sp { display: none !important; }
+}
+
 @media (max-width: 720px) {
   .grid2 { grid-template-columns: 1fr; }
   .search input { width: 100%; }
@@ -273,9 +356,25 @@ footer { color: var(--muted); font-size: 12px; margin-top: 24px; text-align: cen
 </head>
 <body>
 <div class="wrap">
-  <header class="top">
+  <header class="topbar">
     <h1>TYPO3 Statistik</h1>
-    <span class="sub" id="subtitle">Redaktionsaktivität der Vereinsseiten aus TYPO3</span>
+    <span class="meta" id="subtitle">Redaktionsaktivität der Vereinsseiten</span>
+    <span class="spacer"></span>
+    <details class="settings" id="settings" hidden>
+      <summary><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="5" cy="4" r="1.8" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/><circle cx="11" cy="8" r="1.8" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/><circle cx="6" cy="12" r="1.8" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/></svg>Daten &amp; Einstellungen</summary>
+      <div class="panel">
+        <div><h3>Geladene Dateien</h3><div class="filebar" id="filebar"></div></div>
+        <div><h3>Bewertung</h3>
+          <label class="stichtag">Stichtag
+            <select id="stichtag">
+              <option value="data">Datenstand</option>
+              <option value="today">Heute</option>
+            </select>
+          </label>
+        </div>
+        <label class="toggle"><input type="checkbox" id="internal"> Interne Seitenbäume anzeigen</label>
+      </div>
+    </details>
   </header>
 
   <!-- Laden -->
@@ -295,35 +394,17 @@ footer { color: var(--muted); font-size: 12px; margin-top: 24px; text-align: cen
 
   <!-- App -->
   <section id="app" hidden>
-    <div class="filebar" id="filebar"></div>
     <div class="msgs" id="appMsgs"></div>
 
-    <div class="filters" role="group" aria-label="Filter">
-      <div class="search">
-        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 11l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <input type="search" id="q" placeholder="Verein suchen …" aria-label="Verein suchen">
-      </div>
-      <div class="chips" id="chips" aria-label="Status-Filter"></div>
-      <label class="toggle"><input type="checkbox" id="internal"> Interne Seitenbäume anzeigen</label>
-      <label class="stichtag">Stichtag
-        <select id="stichtag">
-          <option value="data">Datenstand</option>
-          <option value="today">Heute</option>
-        </select>
-      </label>
-    </div>
-
-    <nav class="tabs" role="tablist" aria-label="Ansichten">
-      <button class="tab" role="tab" data-view="uebersicht" id="tab-uebersicht">Ampel-Übersicht</button>
-      <button class="tab" role="tab" data-view="heatmap" id="tab-heatmap">Heatmap</button>
-      <button class="tab" role="tab" data-view="verein" id="tab-verein">Detail je Verein</button>
-      <button class="tab" role="tab" data-view="gesamt" id="tab-gesamt">Gesamtentwicklung</button>
+    <nav class="tabs" role="tablist" aria-label="Bereiche">
+      <button class="tab" role="tab" data-view="lage" id="tab-lage">Lage</button>
+      <button class="tab" role="tab" data-view="vereine" id="tab-vereine">Vereine</button>
+      <button class="tab" role="tab" data-view="verlauf" id="tab-verlauf">Verlauf</button>
     </nav>
 
-    <div id="view-uebersicht" role="tabpanel" aria-labelledby="tab-uebersicht"></div>
-    <div id="view-heatmap" role="tabpanel" aria-labelledby="tab-heatmap"></div>
-    <div id="view-verein" role="tabpanel" aria-labelledby="tab-verein"></div>
-    <div id="view-gesamt" role="tabpanel" aria-labelledby="tab-gesamt"></div>
+    <div id="view-lage" role="tabpanel" aria-labelledby="tab-lage"></div>
+    <div id="view-vereine" role="tabpanel" aria-labelledby="tab-vereine"></div>
+    <div id="view-verlauf" role="tabpanel" aria-labelledby="tab-verlauf"></div>
   </section>
 
   <footer>TYPO3 Statistik · läuft vollständig offline · keine Daten verlassen diesen Rechner</footer>
@@ -473,7 +554,7 @@ const S = {
   q: '', status: new Set(STATUS.map(s => s.key).concat('unknown')), internal: false, stichtag: 'data',
   sort: { key: 'days', dir: 1 },
   hmSort: { key: 'sum', dir: -1 },
-  view: 'uebersicht', uid: null, showMedian: true
+  view: 'lage', uid: null, showMedian: true, hmNums: false, vSort: 'days'
 };
 
 function monthRange(list) {
@@ -610,8 +691,8 @@ function setupLoading() {
 function showApp() {
   $('#loader').hidden = true;
   $('#app').hidden = false;
+  $('#settings').hidden = false;
   renderFilebar();
-  renderChips();
   updateStichtagLabels();
   readHash();
   render();
@@ -619,20 +700,23 @@ function showApp() {
 
 function renderFilebar() {
   const part = (res, label) => res
-    ? `<span class="f"><span class="ok" aria-hidden="true">✓</span><b>${esc(label)}</b> ${esc(res.fileName)} · ${fmtN(res.rows.length)} Zeilen</span>`
+    ? `<span class="f"><span class="ok" aria-hidden="true">✓</span><b>${esc(label)}</b> ${fmtN(res.rows.length)} Zeilen</span><span class="src">${esc(res.fileName)}${res.title ? ' – ' + esc(res.title) : ''}</span>`
     : `<span class="f"><span class="miss" aria-hidden="true">✕</span><b>${esc(label)}</b> nicht geladen</span>`;
-  const range = S.months.length ? ` · Zeitraum ${monthLong(S.months[0])} – ${monthLong(S.months[S.months.length - 1])}` : '';
   $('#filebar').innerHTML =
-    part(S.A, 'Letzte Änderung je Seitenbaum:') +
-    part(S.B, 'Änderungen pro Monat:') +
-    `<span>${esc(range.replace(/^ · /, ''))}</span>` +
-    `<label class="btn ghost"><input type="file" accept=".csv,text/csv" multiple hidden id="file2">Andere Dateien laden …</label>`;
+    part(S.A, 'Letzte Änderung je Seitenbaum') +
+    part(S.B, 'Änderungen pro Monat') +
+    `<label class="btn ghost" style="justify-self:start;margin-top:6px"><input type="file" accept=".csv,text/csv" multiple hidden id="file2">Andere Dateien laden …</label>`;
   const f2 = $('#file2');
   f2.addEventListener('change', () => { handleFiles([...f2.files]); f2.value = ''; });
-  const titles = [S.A, S.B].filter(Boolean).map(r => r.title).filter(Boolean);
-  $('#subtitle').textContent = titles.length ? 'Quelle: ' + titles.join(' · ') : 'Redaktionsaktivität der Vereinsseiten aus TYPO3';
+  renderSubtitle();
 }
 
+function renderSubtitle() {
+  const n = S.trees.filter(t => S.internal || !t.internal).length;
+  const parts = [`Datenstand ${fmtDate(S.dataDate)}`, `${fmtN(n)} Vereine`];
+  if (S.months.length) parts.push(`${monthLong(S.months[0])} – ${monthLong(S.months[S.months.length - 1])}`);
+  $('#subtitle').textContent = parts.join(' · ');
+}
 function statusIcon(key) {
   // Form + Farbe, damit der Status nicht nur über Farbe erkennbar ist
   const c = `var(--${key === 'unknown' ? 'unknown' : key})`;
@@ -652,54 +736,12 @@ const statusRange = s => {
   return s.max === Infinity ? `über ${STATUS[i - 1].max} Tage` : `${lo}–${s.max} Tage`;
 };
 
-function renderChips() {
-  const base = baseTrees();
-  const list = STATUS.concat(base.some(t => t.st === STATUS_UNKNOWN) ? [STATUS_UNKNOWN] : []);
-  $('#chips').innerHTML = list.map(s => {
-    const n = base.filter(t => t.st === s).length;
-    return `<button class="chip" data-st="${s.key}" aria-pressed="${S.status.has(s.key)}" data-tip="${esc(s.label + '\n' + statusRange(s) + ' seit der letzten Änderung')}">${statusIcon(s.key)}${esc(s.label)} <span class="n">${n}</span></button>`;
-  }).join('');
-}
-
 function updateStichtagLabels() {
   const sel = $('#stichtag');
   sel.options[0].textContent = `Datenstand (${fmtDate(S.dataDate)})`;
   sel.options[1].textContent = `Heute (${fmtDate(new Date())})`;
   sel.value = S.stichtag;
 }
-
-/* ================= Navigation ================= */
-
-const VIEWS = ['uebersicht', 'heatmap', 'verein', 'gesamt'];
-function readHash() {
-  const h = decodeURIComponent(location.hash.replace(/^#/, ''));
-  const [v, id] = h.split('/');
-  if (VIEWS.includes(v)) S.view = v;
-  if (v === 'verein' && id && S.byUid.has(+id)) S.uid = +id;
-}
-function go(view, uid) {
-  const h = view === 'verein' && uid != null ? `#verein/${uid}` : `#${view}`;
-  if (location.hash !== h) location.hash = h; else { readHash(); render(); }
-}
-window.addEventListener('hashchange', () => { if (!S.trees.length) return; readHash(); render(); window.scrollTo({ top: 0 }); });
-
-/* ================= Rendern ================= */
-
-function render() {
-  hideTip();
-  for (const v of VIEWS) {
-    $('#view-' + v).hidden = v !== S.view;
-    $('#tab-' + v).setAttribute('aria-selected', String(v === S.view));
-  }
-  renderChips();
-  ({ uebersicht: renderOverview, heatmap: renderHeatmap, verein: renderDetail, gesamt: renderTotal })[S.view]();
-}
-
-function noMonthData(what) {
-  return `<div class="card empty">Für ${what} wird die Datei <b>„Änderungen pro Monat“</b> (<code>changes_per_month_history.csv</code>) benötigt.</div>`;
-}
-
-/* ---------- Ansicht 1: Ampel-Übersicht ---------- */
 
 function sparkline(t) {
   if (!S.months.length) return '';
@@ -716,92 +758,7 @@ function sparkline(t) {
 }
 const sparkTip = t => t.name + '\n' + S.months.map((m, i) => `${monthShort(m)}: ${fmtN(t.series[i].n)}`).join('\n');
 
-function renderOverview() {
-  const el = $('#view-uebersicht');
-  const base = baseTrees();
-  const list = sortTrees(visibleTrees(), S.sort);
-  const total = base.reduce((a, t) => a + t.sum, 0);
-  const tiles = `<div class="tiles">
-    <div class="tile"><div class="k">Seitenbäume</div><div class="v">${fmtN(base.length)}</div><div class="d">${S.internal ? 'inkl.' : 'ohne'} interne Bäume</div></div>
-    ${STATUS.map(s => `<div class="tile"><div class="k">${statusIcon(s.key)}${esc(s.label)}</div><div class="v">${fmtN(base.filter(t => t.st === s).length)}</div><div class="d">${statusRange(s)}</div></div>`).join('')}
-    ${S.B ? `<div class="tile"><div class="k">Änderungen gesamt</div><div class="v">${fmtN(total)}</div><div class="d">${S.months.length} Monate</div></div>` : ''}
-  </div>`;
-
-  const cols = [
-    { key: 'status', label: 'Status' },
-    { key: 'name', label: 'Verein' },
-    { key: 'pages', label: 'Seiten', num: true },
-    { key: 'last', label: 'Letzte Änderung', num: true },
-    { key: 'days', label: 'Tage seit Änderung', num: true },
-    ...(S.B ? [
-      { key: 'sum', label: `Änderungen (${S.months.length} Mon.)`, num: true },
-      { key: 'active', label: 'Aktive Monate', num: true },
-      { key: null, label: 'Verlauf' }
-    ] : [])
-  ];
-  const head = cols.map(c => {
-    if (!c.key) return `<th>${esc(c.label)}</th>`;
-    const on = S.sort.key === c.key;
-    const aria = on ? ` aria-sort="${S.sort.dir > 0 ? 'ascending' : 'descending'}"` : '';
-    return `<th class="${c.num ? 'num' : ''}"${aria}><button data-sort="${c.key}">${esc(c.label)}<span class="arr">${on ? (S.sort.dir > 0 ? '▲' : '▼') : ''}</span></button></th>`;
-  }).join('');
-  const rows = list.map(t => `<tr tabindex="0" data-uid="${t.uid}">
-      <td>${statusBadge(t.st)}</td>
-      <td class="name">${esc(t.name)}<span class="uid">#${t.uid}</span>${t.internal ? '<span class="badge">intern</span>' : ''}</td>
-      <td class="num">${t.pages == null ? '–' : fmtN(t.pages)}</td>
-      <td class="num">${fmtDate(t.last)}</td>
-      <td class="num">${t.days == null ? '–' : fmtN(t.days)}</td>
-      ${S.B ? `<td class="num">${fmtN(t.sum)}</td>
-      <td class="num">${t.active} / ${S.months.length}</td>
-      <td data-tip="${esc(sparkTip(t))}">${sparkline(t)}</td>` : ''}
-    </tr>`).join('');
-
-  el.innerHTML = tiles + `<div class="card">
-    <h2>Alle Seitenbäume</h2>
-    <p class="hint">${fmtN(list.length)} von ${fmtN(base.length)} angezeigt · Stichtag ${fmtDate(stichtag())} · Klick auf eine Zeile öffnet die Details.</p>
-    ${S.A ? '' : '<p class="hint">Hinweis: Datei „Letzte Änderung je Seitenbaum“ fehlt – letzte Änderung und Ampel werden aus der Monatsdatei abgeleitet, Seitenzahlen fehlen.</p>'}
-    ${list.length ? `<div class="tscroll"><table class="data"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">Keine Seitenbäume für die aktuelle Auswahl.</div>'}
-  </div>`;
-}
-
-/* ---------- Ansicht 2: Heatmap ---------- */
-
 const binOf = n => n <= 0 ? 0 : HM_BINS.findIndex(b => n <= b.max) + 1;
-
-function renderHeatmap() {
-  const el = $('#view-heatmap');
-  if (!S.B) { el.innerHTML = noMonthData('die Heatmap'); return; }
-  const sortKey = S.hmSort.key;
-  const list = sortTrees(visibleTrees(), S.hmSort);
-  const legend = `<div class="legend" aria-label="Legende">Änderungen pro Monat:
-    <span class="sw"><i class="b0"></i>0</span>
-    ${HM_BINS.map((b, i) => `<span class="sw"><i class="b${i + 1}"></i>${b.label}</span>`).join('')}</div>`;
-  const opt = (k, d, l) => `<option value="${k}:${d}"${sortKey === k && S.hmSort.dir === d ? ' selected' : ''}>${l}</option>`;
-  const tools = `<div class="hm-tools">${legend}
-    <label class="stichtag">Sortierung
-      <select id="hmSort">
-        ${opt('sum', -1, 'Meiste Änderungen')}${opt('name', 1, 'Name A–Z')}${opt('last', -1, 'Letzte Änderung (neueste zuerst)')}${opt('active', -1, 'Aktive Monate')}
-      </select></label></div>`;
-  const head = `<tr><th class="rowh">Verein</th>${S.months.map(m => `<th scope="col">${monthShort(m)}</th>`).join('')}<th class="sum">Summe</th></tr>`;
-  const body = list.map(t => `<tr><th class="rowh" scope="row"><button class="linkish" data-open="${t.uid}" title="${esc(t.name)}">${esc(t.name)}</button></th>${
-    t.series.map((s, i) => {
-      const b = binOf(s.n);
-      const tip = `${fmtN(s.n)} Änderung${s.n === 1 ? '' : 'en'}\n${t.name} · ${monthLong(S.months[i])}` + (s.last ? `\nLetzte Änderung: ${fmtDateTime(s.last)}` : '');
-      return `<td class="c b${b}" tabindex="-1" data-tip="${esc(tip)}">${s.n ? fmtN(s.n) : ''}</td>`;
-    }).join('')}<td class="sum">${fmtN(t.sum)}</td></tr>`).join('');
-  const sums = S.months.map((m, i) => list.reduce((a, t) => a + t.series[i].n, 0));
-  const foot = `<tr><th class="rowh">Summe (${list.length})</th>${sums.map(n => `<td>${fmtN(n)}</td>`).join('')}<td class="sum">${fmtN(sums.reduce((a, b) => a + b, 0))}</td></tr>`;
-  el.innerHTML = `<div class="card"><h2>Änderungen je Verein und Monat</h2>
-    <p class="hint">Farbstufen statt linearer Skala, damit Ausreißer die übrigen Werte nicht überdecken. Leere Felder = keine Änderung. Klick auf den Namen öffnet die Details.</p>
-    ${tools}
-    ${list.length ? `<div class="tscroll"><table class="hm"><thead>${head}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table></div>` : '<div class="empty">Keine Seitenbäume für die aktuelle Auswahl.</div>'}
-  </div>`;
-  $('#hmSort').addEventListener('change', e => {
-    const [k, d] = e.target.value.split(':');
-    S.hmSort = { key: k, dir: +d };
-    renderHeatmap();
-  });
-}
 
 /* ---------- Diagramme (SVG) ---------- */
 
@@ -877,88 +834,220 @@ function monthTable(rows) {
   }</tbody></table></div>`;
 }
 
-/* ---------- Ansicht 3: Detail ---------- */
+// Relative Zeitangabe für "Tage seit letzter Änderung"
+function relDays(d) {
+  if (d == null) return '–';
+  if (d === 0) return 'heute';
+  if (d === 1) return 'gestern';
+  if (d < 45) return `vor ${d} Tagen`;
+  if (d < 365) { const m = Math.round(d / 30.4); return `vor ${m} Monat${m === 1 ? '' : 'en'}`; }
+  const y = Math.floor(d / 365);
+  return `vor ${y} Jahr${y === 1 ? '' : 'en'}`;
+}
 
-function renderDetail() {
-  const el = $('#view-verein');
-  const order = sortTrees(visibleTrees(), S.sort);
-  if (S.uid == null || !S.byUid.has(S.uid)) S.uid = order.length ? order[0].uid : (S.trees[0] && S.trees[0].uid);
-  const t = S.byUid.get(S.uid);
-  if (!t) { el.innerHTML = '<div class="card empty">Keine Daten.</div>'; return; }
-  const all = sortTrees(S.trees.filter(x => S.internal || !x.internal || x.uid === t.uid), { key: 'name', dir: 1 });
-  const pos = order.findIndex(x => x.uid === t.uid);
-  const prev = pos > 0 ? order[pos - 1] : null;
-  const next = pos >= 0 && pos < order.length - 1 ? order[pos + 1] : null;
+function renderChips(base) {
+  const list = STATUS.concat(base.some(t => t.st === STATUS_UNKNOWN) ? [STATUS_UNKNOWN] : []);
+  return list.map(s => {
+    const n = base.filter(t => t.st === s).length;
+    return `<button class="chip" data-st="${s.key}" aria-pressed="${S.status.has(s.key)}" data-tip="${esc(s.label + '\n' + statusRange(s) + ' seit der letzten Änderung')}">${statusIcon(s.key)}${esc(s.label)} <span class="n">${n}</span></button>`;
+  }).join('');
+}
 
-  const nav = `<div class="det-nav">
-    <button class="btn ghost" id="dPrev" ${prev ? '' : 'disabled'} aria-label="Vorheriger Verein">← ${prev ? esc(prev.name) : 'Vorheriger'}</button>
-    <select id="dSel" aria-label="Verein auswählen">${all.map(x => `<option value="${x.uid}"${x.uid === t.uid ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
-    <button class="btn ghost" id="dNext" ${next ? '' : 'disabled'} aria-label="Nächster Verein">${next ? esc(next.name) : 'Nächster'} →</button>
+/* ================= Navigation ================= */
+
+const VIEWS = ['lage', 'vereine', 'verlauf'];
+// Alte Adressen weiter unterstützen
+const VIEW_ALIAS = { uebersicht: 'lage', verein: 'vereine', heatmap: 'verlauf', gesamt: 'verlauf' };
+function readHash() {
+  const h = decodeURIComponent(location.hash.replace(/^#/, ''));
+  const [raw, id] = h.split('/');
+  const v = VIEW_ALIAS[raw] || raw;
+  if (VIEWS.includes(v)) S.view = v;
+  if (v === 'vereine' && id && S.byUid.has(+id)) S.uid = +id;
+}
+function go(view, uid) {
+  const h = view === 'vereine' && uid != null ? `#verein/${uid}` : `#${view}`;
+  if (location.hash !== h) location.hash = h; else { readHash(); render(); }
+}
+window.addEventListener('hashchange', () => {
+  if (!S.trees.length) return;
+  const before = S.view;
+  readHash(); render();
+  if (before !== S.view) window.scrollTo({ top: 0 });
+});
+
+/* ================= Rendern ================= */
+
+function render() {
+  hideTip();
+  for (const v of VIEWS) {
+    $('#view-' + v).hidden = v !== S.view;
+    $('#tab-' + v).setAttribute('aria-selected', String(v === S.view));
+  }
+  renderSubtitle();
+  ({ lage: renderLage, vereine: renderVereine, verlauf: renderVerlauf })[S.view]();
+}
+
+function noMonthData(what) {
+  return `<div class="card empty">Für ${what} wird die Datei <b>„Änderungen pro Monat“</b> (<code>changes_per_month_history.csv</code>) benötigt.</div>`;
+}
+
+// Basismenge ohne Suche und Statusfilter (für Lage und Verlauf)
+function shownTrees() { return S.trees.filter(t => S.internal || !t.internal); }
+
+/* ---------- Bereich 1: Lage ---------- */
+
+function attentionList(list) {
+  return `<div class="alist" role="list">${list.map(t => `<div class="row" role="listitem button" tabindex="0" data-open="${t.uid}">
+      <span>${statusIcon(t.st.key)}</span>
+      <span class="nm" title="${esc(t.name)}">${esc(t.name)}${t.internal ? '<span class="badge">intern</span>' : ''}</span>
+      <span class="rel">${relDays(t.days)}</span>
+      <span class="dt">${fmtDate(t.last)}</span>
+      <span class="sp" data-tip="${esc(sparkTip(t))}">${sparkline(t)}</span>
+    </div>`).join('')}</div>`;
+}
+
+function renderLage() {
+  const el = $('#view-lage');
+  const base = shownTrees();
+  const by = key => sortTrees(base.filter(t => t.st.key === key), { key: 'days', dir: 1 });
+  const total = base.reduce((a, t) => a + t.sum, 0);
+  const tiles = `<div class="tiles st5">
+    ${STATUS.map(s => `<button class="tile clk" data-goto-st="${s.key}" data-tip="${esc('In der Vereinsliste anzeigen\n' + statusRange(s) + ' seit der letzten Änderung')}"><div class="k">${statusIcon(s.key)}${esc(s.label)}</div><div class="v">${fmtN(base.filter(t => t.st === s).length)}</div><div class="d">${statusRange(s)}</div></button>`).join('')}
+    ${S.B ? `<div class="tile"><div class="k">Änderungen</div><div class="v">${fmtN(total)}</div><div class="d">in ${S.months.length} Monaten</div></div>` : ''}
   </div>`;
-  const head = `<div class="det-head"><h2>${esc(t.name)}</h2>${statusBadge(t.st)}
-    <span class="meta">#${t.uid}${t.internal ? ' · intern' : ''} · ${t.pages == null ? '–' : fmtN(t.pages)} Seiten · letzte Änderung ${fmtDateTime(t.last)}${t.days == null ? '' : ` · vor ${fmtN(t.days)} Tag${t.days === 1 ? '' : 'en'}`}</span></div>`;
 
-  if (!S.B) { el.innerHTML = nav + `<div class="card">${head}</div>` + noMonthData('den Monatsverlauf'); bindDetail(prev, next); return; }
+  // Wer braucht Hilfe? Erst die, die gerade abgerutscht sind (inaktiv), dann die eingeschlafenen.
+  const need = by('serious').concat(by('critical'));
+  const unknown = base.filter(t => t.st === STATUS_UNKNOWN);
+  const attention = `<div class="card">
+    <h2>Brauchen Aufmerksamkeit <span class="cnt">${fmtN(need.length)}</span></h2>
+    <p class="hint">Seit über ${STATUS[1].max} Tagen keine Änderung · Stichtag ${fmtDate(stichtag())} · Klick öffnet den Verein.</p>
+    ${need.length ? attentionList(need) : `<div class="allgood">${statusIcon('good')} Alle Vereine haben in den letzten ${STATUS[1].max} Tagen etwas geändert.</div>`}
+  </div>`;
+  const group = (key, title, hint, open) => {
+    const list = by(key);
+    if (!list.length) return '';
+    return `<details class="card grp"${open ? ' open' : ''}><summary><h2>${statusIcon(key)}${esc(title)} <span class="n">${fmtN(list.length)}</span></h2></summary>
+      <p class="hint">${esc(hint)}</p>${attentionList(list)}</details>`;
+  };
+  el.innerHTML = tiles + attention +
+    group('warning', 'Ruhig – bald nachfragen', `${statusRange(STATUS[1])} seit der letzten Änderung`, false) +
+    group('good', 'Aktiv', `${statusRange(STATUS[0])} seit der letzten Änderung`, false) +
+    (unknown.length ? `<div class="card grp"><h2>${statusIcon('unknown')}Ohne Datum <span class="n">${unknown.length}</span></h2>${attentionList(unknown)}</div>` : '') +
+    (S.A ? '' : '<p class="hint" style="margin-top:12px">Hinweis: Datei „Letzte Änderung je Seitenbaum“ fehlt – letzte Änderung und Status werden aus der Monatsdatei abgeleitet.</p>');
+}
+
+/* ---------- Bereich 2: Vereine (Liste + Detail) ---------- */
+
+const V_SORTS = {
+  days: { key: 'days', dir: 1, label: 'Letzte Änderung' },
+  name: { key: 'name', dir: 1, label: 'Name A–Z' },
+  sum: { key: 'sum', dir: -1, label: 'Meiste Änderungen' },
+  pages: { key: 'pages', dir: -1, label: 'Meiste Seiten' }
+};
+
+function renderVereine() {
+  const el = $('#view-vereine');
+  const base = shownTrees();
+  const list = sortTrees(visibleTrees(), V_SORTS[S.vSort]);
+  if (S.uid == null || !S.byUid.has(S.uid)) S.uid = list.length ? list[0].uid : null;
+
+  // Liste nur neu aufbauen, wenn sie noch nicht existiert – sonst gehen Fokus und Scrollposition verloren
+  if (!$('#vSearch', el)) {
+    el.innerHTML = `<div class="split">
+      <div class="card vlist">
+        <div class="vtools">
+          <div class="search">
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 11l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input type="search" id="vSearch" placeholder="Verein suchen …" aria-label="Verein suchen">
+          </div>
+          <div class="chips" id="vChips" aria-label="Status-Filter"></div>
+          <div class="row2"><span id="vCount"></span>
+            <label>Sortieren <select id="vSort">${Object.entries(V_SORTS).map(([k, o]) => `<option value="${k}">${o.label}</option>`).join('')}</select></label></div>
+        </div>
+        <div class="vrows" id="vRows" role="listbox" aria-label="Vereine"></div>
+      </div>
+      <div id="vDetail"></div>
+    </div>`;
+  }
+  $('#vSearch').value = S.q;
+  $('#vSort').value = S.vSort;
+  $('#vChips').innerHTML = renderChips(base.filter(t => !S.q.trim() || t.name.toLowerCase().includes(S.q.trim().toLowerCase()) || String(t.uid) === S.q.trim()));
+  $('#vCount').textContent = `${fmtN(list.length)} von ${fmtN(base.length)}`;
+  $('#vRows').innerHTML = list.length ? list.map(t => `<button class="vrow" role="option" data-uid="${t.uid}" aria-current="${t.uid === S.uid}" aria-selected="${t.uid === S.uid}">
+      ${statusIcon(t.st.key)}<span class="nm" title="${esc(t.name)}">${esc(t.name)}</span><span class="rel">${relDays(t.days)}</span></button>`).join('')
+    : '<div class="empty">Kein Verein passt zur Auswahl.</div>';
+  const cur = $('#vRows [aria-current="true"]');
+  if (cur) cur.scrollIntoView({ block: 'nearest' });
+  renderDetail(list);
+}
+
+function renderDetail(list) {
+  const el = $('#vDetail');
+  const t = S.byUid.get(S.uid);
+  if (!t) { el.innerHTML = '<div class="card empty">Links einen Verein auswählen.</div>'; return; }
+  const meta = [`#${t.uid}`, t.internal ? 'intern' : null, t.pages == null ? null : `${fmtN(t.pages)} Seiten`,
+    `letzte Änderung ${fmtDateTime(t.last)}`].filter(Boolean).join(' · ');
+  const head = `<div class="det-head"><h2>${esc(t.name)}</h2>${statusBadge(t.st)}<span class="meta">${t.days == null ? '' : relDays(t.days)}</span></div>
+    <p class="hint">${esc(meta)}</p>`;
+  if (!S.B) { el.innerHTML = `<div class="card">${head}</div>` + noMonthData('den Monatsverlauf'); return; }
 
   const n = S.months.length;
-  const tiles = `<div class="tiles">
-    <div class="tile"><div class="k">Änderungen (${n} Monate)</div><div class="v">${fmtN(t.sum)}</div></div>
-    <div class="tile"><div class="k">Ø pro Monat</div><div class="v">${fmtN(Math.round(t.sum / n * 10) / 10)}</div></div>
-    <div class="tile"><div class="k">Aktivster Monat</div><div class="v">${t.peak >= 0 ? monthShort(S.months[t.peak]) : '–'}</div><div class="d">${t.peak >= 0 ? fmtN(t.series[t.peak].n) + ' Änderungen' : 'keine Änderungen'}</div></div>
-    <div class="tile"><div class="k">Aktive Monate</div><div class="v">${t.active} / ${n}</div></div>
+  const stats = `<div class="stats">
+    <div><span class="k">Änderungen (${n} Monate)</span><span class="v">${fmtN(t.sum)}</span></div>
+    <div><span class="k">Aktive Monate</span><span class="v">${t.active} / ${n}</span></div>
+    <div><span class="k">Ø pro Monat</span><span class="v">${fmtN(Math.round(t.sum / n * 10) / 10)}</span></div>
+    <div><span class="k">Aktivster Monat</span><span class="v">${t.peak >= 0 ? monthShort(S.months[t.peak]) : '–'}</span>${t.peak >= 0 ? `<span class="d">${fmtN(t.series[t.peak].n)} Änderungen</span>` : ''}</div>
   </div>`;
-  // Median über alle Vereine (interne nur, wenn eingeblendet)
-  const peers = S.trees.filter(x => S.internal || !x.internal);
+  const peers = shownTrees();
   const med = S.months.map((m, i) => median(peers.map(x => x.series[i].n)));
   const tips = t.series.map((s, i) => `${fmtN(s.n)} Änderung${s.n === 1 ? '' : 'en'}\n${monthLong(S.months[i])}` +
     (s.last ? `\nLetzte Änderung: ${fmtDateTime(s.last)}` : '') + (S.showMedian ? `\nMedian aller Vereine: ${fmtN(med[i])}` : ''));
-
-  el.innerHTML = nav + `<div class="card">${head}${tiles}
+  el.innerHTML = `<div class="card">${head}${stats}
     <div class="ckey"><span><i class="kb"></i>Änderungen pro Monat</span>${S.showMedian ? '<span><i class="kl"></i>Median aller Vereine</span>' : ''}
-      <label class="toggle"><input type="checkbox" id="dMed"${S.showMedian ? ' checked' : ''}> Median anzeigen</label></div>
+      <label class="toggle"><input type="checkbox" id="dMed"${S.showMedian ? ' checked' : ''}> Vergleich mit allen Vereinen</label></div>
     <div class="chart" id="dChart"></div>
-    ${monthTable([{ label: 'Änderungen', values: t.series.map(s => s.n) }].concat(S.showMedian ? [{ label: 'Median', values: med }] : []))}
+    <details class="more"><summary>Werte als Tabelle</summary>
+      ${monthTable([{ label: 'Änderungen', values: t.series.map(s => s.n) }].concat(S.showMedian ? [{ label: 'Median', values: med }] : []))}</details>
   </div>`;
   barChart($('#dChart'), { labels: S.months.map(monthShort), values: t.series.map(s => s.n), tips, overlay: S.showMedian ? med : null, height: 260 });
-  $('#dMed').addEventListener('change', e => { S.showMedian = e.target.checked; renderDetail(); });
-  bindDetail(prev, next);
-}
-function bindDetail(prev, next) {
-  $('#dSel').addEventListener('change', e => go('verein', +e.target.value));
-  if (prev) $('#dPrev').addEventListener('click', () => go('verein', prev.uid));
-  if (next) $('#dNext').addEventListener('click', () => go('verein', next.uid));
+  $('#dMed').addEventListener('change', e => { S.showMedian = e.target.checked; renderDetail(list); });
 }
 
-/* ---------- Ansicht 4: Gesamtentwicklung ---------- */
+/* ---------- Bereich 3: Verlauf ---------- */
 
-function renderTotal() {
-  const el = $('#view-gesamt');
-  const list = visibleTrees();
-  const statusCard = () => {
-    const base = baseTrees();
-    const maxC = Math.max(1, ...STATUS.map(s => base.filter(t => t.st === s).length));
-    return `<div class="card"><h2>Verteilung nach Status</h2><p class="hint">${fmtN(base.length)} Seitenbäume · Stichtag ${fmtDate(stichtag())}</p>
-      <div class="hbars">${STATUS.map(s => {
-        const c = base.filter(t => t.st === s).length;
-        return `<span class="lab">${statusBadge(s)} <span class="uid">${statusRange(s)}</span></span><span class="track"><span class="fill s-${s.key}" style="display:block;width:${(c / maxC * 100).toFixed(1)}%"></span></span><span class="val">${fmtN(c)}</span>`;
-      }).join('')}</div></div>`;
-  };
-  if (!S.B) { el.innerHTML = noMonthData('die Gesamtentwicklung') + statusCard(); return; }
+function renderVerlauf() {
+  const el = $('#view-verlauf');
+  if (!S.B) { el.innerHTML = noMonthData('den Verlauf'); return; }
+  const list = shownTrees();
   const sums = S.months.map((m, i) => list.reduce((a, t) => a + t.series[i].n, 0));
   const act = S.months.map((m, i) => list.filter(t => t.series[i].n > 0).length);
-  const top = list.slice().sort((a, b) => b.sum - a.sum || collator.compare(a.name, b.name)).slice(0, 10).filter(t => t.sum > 0);
-  const maxTop = Math.max(1, ...top.map(t => t.sum));
+
+  const hl = sortTrees(list, S.hmSort);
+  const legend = `<div class="legend" aria-label="Legende">Änderungen pro Monat:
+    <span class="sw"><i class="b0"></i>0</span>
+    ${HM_BINS.map((b, i) => `<span class="sw"><i class="b${i + 1}"></i>${b.label}</span>`).join('')}</div>`;
+  const opt = (k, d, l) => `<option value="${k}:${d}"${S.hmSort.key === k && S.hmSort.dir === d ? ' selected' : ''}>${l}</option>`;
+  const head = `<tr><th class="rowh">Verein</th>${S.months.map(m => `<th scope="col">${monthShort(m)}</th>`).join('')}<th class="sum">Summe</th></tr>`;
+  const body = hl.map(t => `<tr><th class="rowh" scope="row"><button class="linkish" data-open="${t.uid}" title="${esc(t.name)}">${esc(t.name)}</button></th>${
+    t.series.map((s, i) => {
+      const tip = `${fmtN(s.n)} Änderung${s.n === 1 ? '' : 'en'}\n${t.name} · ${monthLong(S.months[i])}` + (s.last ? `\nLetzte Änderung: ${fmtDateTime(s.last)}` : '');
+      return `<td class="c b${binOf(s.n)}" tabindex="-1" data-tip="${esc(tip)}">${s.n ? fmtN(s.n) : ''}</td>`;
+    }).join('')}<td class="sum">${fmtN(t.sum)}</td></tr>`).join('');
 
   el.innerHTML = `<div class="grid2">
-      <div class="card"><h2>Änderungen pro Monat</h2><p class="hint">Summe über ${fmtN(list.length)} Seitenbäume · gesamt ${fmtN(sums.reduce((a, b) => a + b, 0))}</p><div class="chart" id="gSum"></div></div>
-      <div class="card"><h2>Aktive Vereine pro Monat</h2><p class="hint">Seitenbäume mit mindestens einer Änderung im Monat</p><div class="chart" id="gAct"></div></div>
+      <div class="card"><h2>Änderungen pro Monat</h2><p class="hint">Alle ${fmtN(list.length)} Vereine zusammen · gesamt ${fmtN(sums.reduce((a, b) => a + b, 0))}</p><div class="chart" id="gSum"></div></div>
+      <div class="card"><h2>Aktive Vereine pro Monat</h2><p class="hint">Vereine mit mindestens einer Änderung im Monat</p><div class="chart" id="gAct"></div></div>
     </div>
-    <div class="card">${monthTable([{ label: 'Änderungen', values: sums }, { label: 'Aktive Vereine', values: act }])}</div>
-    <div class="grid2" style="margin-top:16px">
-      <div class="card"><h2>Top 10 nach Änderungen</h2><p class="hint">Im gesamten Zeitraum · Klick öffnet die Details</p>
-        ${top.length ? `<div class="hbars">${top.map(t => `<button class="linkish lab" data-open="${t.uid}" title="${esc(t.name)}">${esc(t.name)}</button><span class="track" data-tip="${esc(fmtN(t.sum) + ' Änderungen\n' + t.name)}"><span class="fill" style="display:block;width:${(t.sum / maxTop * 100).toFixed(1)}%"></span></span><span class="val">${fmtN(t.sum)}</span>`).join('')}</div>` : '<div class="empty">Keine Änderungen in der Auswahl.</div>'}
+    <div class="card" style="margin-top:16px"><h2>Wer war wann aktiv?</h2>
+      <p class="hint">Jede Zeile ein Verein, jede Spalte ein Monat – je dunkler, desto mehr Änderungen. Zahlen per Mauszeiger oder über „Zahlen anzeigen“.</p>
+      <div class="hm-tools">${legend}
+        <div class="tg"><label class="toggle"><input type="checkbox" id="hmNums"${S.hmNums ? ' checked' : ''}> Zahlen anzeigen</label>
+        <label class="stichtag">Sortierung <select id="hmSort">${opt('sum', -1, 'Meiste Änderungen')}${opt('name', 1, 'Name A–Z')}${opt('last', -1, 'Letzte Änderung (neueste zuerst)')}${opt('active', -1, 'Aktive Monate')}</select></label></div>
       </div>
-      ${statusCard()}
+      <div class="tscroll"><table class="hm hm-compact${S.hmNums ? ' nums' : ''}"><thead>${head}</thead><tbody>${body}</tbody></table></div>
+      <details class="more"><summary>Summen pro Monat als Tabelle</summary>${monthTable([{ label: 'Änderungen', values: sums }, { label: 'Aktive Vereine', values: act }])}</details>
     </div>`;
   barChart($('#gSum'), {
     labels: S.months.map(monthShort), values: sums,
@@ -966,8 +1055,10 @@ function renderTotal() {
   });
   lineChart($('#gAct'), {
     labels: S.months.map(monthShort), values: act, maxHint: Math.min(list.length, Math.max(...act) + 2),
-    tips: act.map((v, i) => `${fmtN(v)} aktive Vereine\n${monthLong(S.months[i])}\nvon ${fmtN(list.length)} Seitenbäumen`)
+    tips: act.map((v, i) => `${fmtN(v)} aktive Vereine\n${monthLong(S.months[i])}\nvon ${fmtN(list.length)} Vereinen`)
   });
+  $('#hmSort').addEventListener('change', e => { const [k, d] = e.target.value.split(':'); S.hmSort = { key: k, dir: +d }; renderVerlauf(); });
+  $('#hmNums').addEventListener('change', e => { S.hmNums = e.target.checked; renderVerlauf(); });
 }
 
 /* ================= Tooltip ================= */
@@ -1004,52 +1095,74 @@ document.addEventListener('scroll', hideTip, true);
 /* ================= Events ================= */
 
 function bindUI() {
-  $('#q').addEventListener('input', e => { S.q = e.target.value; render(); });
   $('#internal').addEventListener('change', e => { S.internal = e.target.checked; render(); });
   $('#stichtag').addEventListener('change', e => { S.stichtag = e.target.value; computeStatus(); render(); });
-  $('#chips').addEventListener('click', e => {
-    const b = e.target.closest('[data-st]');
-    if (!b) return;
-    const k = b.dataset.st;
-    if (S.status.has(k)) S.status.delete(k); else S.status.add(k);
-    render();
+  document.addEventListener('click', e => {
+    const s = $('#settings');
+    if (s.open && !s.contains(e.target)) s.open = false;
   });
-  document.querySelector('.tabs').addEventListener('click', e => {
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#settings').open = false; });
+
+  const tabs = document.querySelector('.tabs');
+  tabs.addEventListener('click', e => {
     const b = e.target.closest('[data-view]');
-    if (b) go(b.dataset.view, b.dataset.view === 'verein' ? S.uid : null);
+    if (b) go(b.dataset.view, b.dataset.view === 'vereine' ? S.uid : null);
   });
-  document.querySelector('.tabs').addEventListener('keydown', e => {
+  tabs.addEventListener('keydown', e => {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     const i = VIEWS.indexOf(S.view) + (e.key === 'ArrowRight' ? 1 : -1);
     const v = VIEWS[(i + VIEWS.length) % VIEWS.length];
-    go(v, v === 'verein' ? S.uid : null);
+    go(v, v === 'vereine' ? S.uid : null);
     setTimeout(() => $('#tab-' + v).focus(), 0);
   });
-  $('#view-uebersicht').addEventListener('click', e => {
-    const s = e.target.closest('[data-sort]');
-    if (s) {
-      const k = s.dataset.sort;
-      S.sort = S.sort.key === k ? { key: k, dir: -S.sort.dir } : { key: k, dir: ['sum', 'active', 'pages', 'last'].includes(k) ? -1 : 1 };
-      renderOverview();
-      const nb = document.querySelector(`#view-uebersicht [data-sort="${k}"]`);
-      if (nb) nb.focus();
-      return;
+
+  // Lage: Kachel öffnet die Vereinsliste mit diesem Status
+  $('#view-lage').addEventListener('click', e => {
+    const b = e.target.closest('[data-goto-st]');
+    if (!b) return;
+    S.status = new Set([b.dataset.gotoSt]); S.q = ''; S.uid = null;
+    go('vereine', null);
+  });
+
+  // Vereine
+  const v = $('#view-vereine');
+  v.addEventListener('input', e => {
+    if (e.target.id !== 'vSearch') return;
+    S.q = e.target.value; S.uid = null; renderVereine();
+  });
+  v.addEventListener('change', e => {
+    if (e.target.id === 'vSort') { S.vSort = e.target.value; renderVereine(); }
+  });
+  v.addEventListener('click', e => {
+    const c = e.target.closest('[data-st]');
+    if (c) {
+      const k = c.dataset.st;
+      if (S.status.has(k)) S.status.delete(k); else S.status.add(k);
+      S.uid = null; renderVereine(); return;
     }
-    const tr = e.target.closest('tr[data-uid]');
-    if (tr) go('verein', +tr.dataset.uid);
+    const r = e.target.closest('.vrow[data-uid]');
+    if (r) go('vereine', +r.dataset.uid);
   });
-  $('#view-uebersicht').addEventListener('keydown', e => {
-    const tr = e.target.closest('tr[data-uid]');
-    if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go('verein', +tr.dataset.uid); }
+  v.addEventListener('keydown', e => {
+    const r = e.target.closest('.vrow');
+    if (!r || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return;
+    e.preventDefault();
+    const n = e.key === 'ArrowDown' ? r.nextElementSibling : r.previousElementSibling;
+    if (n && n.dataset.uid) { go('vereine', +n.dataset.uid); setTimeout(() => { const x = $(`.vrow[data-uid="${n.dataset.uid}"]`); if (x) x.focus(); }, 0); }
   });
+
   document.addEventListener('click', e => {
     const o = e.target.closest('[data-open]');
-    if (o) go('verein', +o.dataset.open);
+    if (o) go('vereine', +o.dataset.open);
+  });
+  document.addEventListener('keydown', e => {
+    const o = e.target.closest && e.target.closest('.row[data-open]');
+    if (o && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go('vereine', +o.dataset.open); }
   });
   let rt;
   window.addEventListener('resize', () => {
     clearTimeout(rt);
-    rt = setTimeout(() => { if (S.trees.length && (S.view === 'verein' || S.view === 'gesamt')) render(); }, 150);
+    rt = setTimeout(() => { if (S.trees.length && S.view !== 'lage') render(); }, 150);
   });
 }
 
