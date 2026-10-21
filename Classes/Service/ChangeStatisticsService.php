@@ -47,11 +47,14 @@ final class ChangeStatisticsService
      *
      * Ohne Filter: alle konfigurierten Sites (Fallback: Seiten mit is_siteroot=1).
      * Mit Filter: Site-Identifier oder Seiten-UIDs; eine UID, die keine Site ist, wird als eigener Teilbaum ausgewertet.
+     * Bäume, deren Wurzelseite nicht aktiv ist (gelöscht, versteckt, außerhalb von Start-/Stoppzeit oder nicht
+     * vorhanden), werden weggelassen, außer $includeInactive ist gesetzt.
      *
      * @param list<string> $filter
+     * @param array<int, array{rootPageId: int, identifier: string, title: string}>|null $excluded erhält die weggelassenen Bäume
      * @return array<int, array{rootPageId: int, identifier: string, title: string}>
      */
-    public function getRoots(array $filter = []): array
+    public function getRoots(array $filter = [], bool $includeInactive = false, ?array &$excluded = null): array
     {
         $roots = $this->getAllRoots();
 
@@ -74,10 +77,17 @@ final class ChangeStatisticsService
             $roots = $selected;
         }
 
-        foreach ($this->fetchPageTitles(array_keys($roots)) as $uid => $title) {
-            $roots[$uid]['title'] = $title;
+        $pages = $this->fetchRootPages(array_keys($roots));
+        $excluded = [];
+        foreach ($roots as $uid => $root) {
+            $roots[$uid]['title'] = $pages[$uid]['title'] ?? '';
+            if (!$includeInactive && !($pages[$uid]['active'] ?? false)) {
+                $excluded[$uid] = $roots[$uid];
+                unset($roots[$uid]);
+            }
         }
         ksort($roots);
+        ksort($excluded);
         return $roots;
     }
 
@@ -583,10 +593,12 @@ final class ChangeStatisticsService
     }
 
     /**
+     * Titel der Wurzelseiten und ob sie aktiv sind (nicht gelöscht, nicht versteckt, im Veröffentlichungszeitraum).
+     *
      * @param list<int> $uids
-     * @return array<int, string>
+     * @return array<int, array{title: string, active: bool}>
      */
-    private function fetchPageTitles(array $uids): array
+    private function fetchRootPages(array $uids): array
     {
         if ($uids === []) {
             return [];
@@ -594,14 +606,20 @@ final class ChangeStatisticsService
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder
-            ->select('uid', 'title')
+            ->select('uid', 'title', 'deleted', 'hidden', 'starttime', 'endtime')
             ->from('pages')
             ->where($queryBuilder->expr()->in('uid', $queryBuilder->createNamedParameter($uids, Connection::PARAM_INT_ARRAY)))
             ->executeQuery();
-        $titles = [];
+        $now = time();
+        $pages = [];
         while ($row = $result->fetchAssociative()) {
-            $titles[(int)$row['uid']] = (string)$row['title'];
+            $pages[(int)$row['uid']] = [
+                'title' => (string)$row['title'],
+                'active' => !(int)$row['deleted'] && !(int)$row['hidden']
+                    && ((int)$row['starttime'] === 0 || (int)$row['starttime'] <= $now)
+                    && ((int)$row['endtime'] === 0 || (int)$row['endtime'] > $now),
+            ];
         }
-        return $titles;
+        return $pages;
     }
 }

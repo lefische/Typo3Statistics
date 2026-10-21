@@ -45,6 +45,7 @@ final class ChangeStatisticsCommand extends Command
                 InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
                 'Änderungen, die nur diese Felder betreffen, nicht zählen (Standard: is_siteroot; "none" = alles zählen)',
             )
+            ->addOption('include-inactive-roots', null, InputOption::VALUE_NONE, 'Auch Seitenbäume auswerten, deren Wurzelseite gelöscht, versteckt oder nicht im Veröffentlichungszeitraum ist')
             ->addOption('format', 'f', InputOption::VALUE_REQUIRED, 'Ausgabe: table, csv oder json', 'table');
     }
 
@@ -65,13 +66,18 @@ final class ChangeStatisticsCommand extends Command
 
         try {
             $since = $this->resolveSince($input);
-            $roots = $this->changeStatisticsService->getRoots($this->splitList($input->getOption('site')));
+            $excludedRoots = [];
+            $roots = $this->changeStatisticsService->getRoots(
+                $this->splitList($input->getOption('site')),
+                (bool)$input->getOption('include-inactive-roots'),
+                $excludedRoots,
+            );
         } catch (\InvalidArgumentException $e) {
             $io->error($e->getMessage());
             return Command::INVALID;
         }
         if ($roots === []) {
-            $io->warning('Keine Sites bzw. Seitenbäume gefunden.');
+            $io->warning('Keine Sites bzw. Seitenbäume mit aktiver Wurzelseite gefunden.');
             return Command::SUCCESS;
         }
 
@@ -88,13 +94,13 @@ final class ChangeStatisticsCommand extends Command
         match ($format) {
             'csv' => $this->renderCsv($output, $statistics),
             'json' => $output->writeln((string)json_encode($this->toJson($statistics, $source, $since), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)),
-            default => $this->renderTable($io, $statistics, $source, $since, $ignoreFields),
+            default => $this->renderTable($io, $statistics, $source, $since, $ignoreFields, $excludedRoots),
         };
 
         return Command::SUCCESS;
     }
 
-    private function renderTable(SymfonyStyle $io, array $statistics, string $source, int $since, array $ignoreFields): void
+    private function renderTable(SymfonyStyle $io, array $statistics, string $source, int $since, array $ignoreFields, array $excludedRoots): void
     {
         $io->title('Änderungen pro Seitenbaum');
         $io->text(sprintf(
@@ -142,6 +148,13 @@ final class ChangeStatisticsCommand extends Command
                 '%d Änderung(en) nicht gezählt, weil nur ignorierte Felder geändert wurden (%s).',
                 $statistics['ignored'],
                 implode(', ', $ignoreFields),
+            ));
+        }
+        if ($excludedRoots !== []) {
+            $io->note(sprintf(
+                '%d Seitenbaum/-bäume nicht ausgewertet, weil die Wurzelseite nicht aktiv ist: %s (mit --include-inactive-roots einbeziehen).',
+                count($excludedRoots),
+                implode(', ', array_map(static fn(array $root): string => ($root['title'] !== '' ? $root['title'] : $root['identifier']) . ' [' . $root['rootPageId'] . ']', $excludedRoots)),
             ));
         }
         if ($statistics['unassigned'] > 0) {

@@ -2,6 +2,8 @@
 -- Änderungsstatistik pro Seitenbaum – reine SQL-Variante (MySQL >= 8.0 / MariaDB >= 10.2, wegen WITH RECURSIVE)
 --
 -- Wurzeln der Seitenbäume sind hier alle Seiten mit "Als Anfang der Webseite benutzen" (is_siteroot = 1).
+-- Berücksichtigt werden nur Bäume, deren Wurzelseite aktiv ist (nicht gelöscht, nicht versteckt, Start-/Stoppzeit
+-- eingehalten). Bäume mit inaktiver Wurzelseite fehlen in der Ausgabe vollständig.
 -- Liegt eine Site innerhalb eines anderen Baums, gehören ihre Seiten zur inneren Site.
 -- Übersetzte Seiten werden über l10n_parent dem Baum der Standardsprache zugeordnet.
 -- Änderungen, bei denen nur "Als Anfang der Webseite benutzen" (is_siteroot) umgestellt wurde, werden nicht gezählt
@@ -18,6 +20,10 @@ WITH RECURSIVE tree AS (
     SELECT uid AS page_uid, uid AS root_uid
     FROM pages
     WHERE is_siteroot = 1 AND sys_language_uid = 0
+      -- nur Seitenbäume mit aktiver Wurzelseite (nicht gelöscht, nicht versteckt, im Veröffentlichungszeitraum)
+      AND deleted = 0 AND hidden = 0
+      AND (starttime = 0 OR starttime <= UNIX_TIMESTAMP())
+      AND (endtime = 0 OR endtime > UNIX_TIMESTAMP())
     UNION ALL
     SELECT p.uid, t.root_uid
     FROM pages p

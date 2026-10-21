@@ -47,6 +47,7 @@ vendor/bin/typo3 statistics:changes --format=json
 | `-t, --table`           | Nur diese Tabellen zählen                                                                   |
 | `-x, --exclude-table`   | Diese Tabellen nicht zählen                                                                 |
 | `-i, --ignore-field`    | Änderungen, die nur diese Felder betreffen, nicht zählen (Standard: `is_siteroot`; `none` = alles zählen) |
+| `--include-inactive-roots` | Auch Seitenbäume auswerten, deren Wurzelseite nicht aktiv ist (siehe unten) |
 | `-f, --format`          | `table` (Standard), `csv` oder `json`                                                       |
 
 Beispielausgabe:
@@ -138,6 +139,11 @@ Datumswerte sind im Format ISO 8601 mit Zeitzone, z. B. `2026-09-20T12:00:00+02:
 - **Seitenbäume**: alle Sites aus `config/sites/*` (Fallback: Seiten mit *Als Anfang der Webseite benutzen*).
   Liegt eine Site innerhalb eines anderen Baums, zählen ihre Seiten nur zur inneren Site.
   Übersetzte Seiten und gelöschte Seiten werden mitberücksichtigt.
+- **Nur aktive Wurzelseiten**: Ausgewertet werden nur Seitenbäume, deren Wurzelseite aktiv ist – also nicht gelöscht,
+  nicht versteckt und innerhalb von Start- und Stoppzeit (Stichtag: Zeitpunkt der Auswertung). Die übrigen Bäume
+  erscheinen nicht in der Ausgabe; die Tabellenausgabe nennt sie in einem Hinweis. Ihre Seiten werden auch nicht einem
+  übergeordneten Baum zugerechnet. Mit `--include-inactive-roots` werden sie trotzdem ausgewertet. Unterseiten werden
+  dagegen nicht gefiltert: Versteckte Unterseiten eines aktiven Baums zählen weiter mit.
 - **Änderungen pro Monat / Letzte Änderung (Verlauf)**: aus `sys_history` (Änderungsverlauf). Bei Seiten ist die
   Seite der Datensatz selbst, bei allen anderen Tabellen deren `pid`. Alternativ mit `--source=log` aus `sys_log`
   (Backend-Protokoll, Aktionen neu/geändert/gelöscht/verschoben/übersetzt).
@@ -165,7 +171,8 @@ MySQL ≥ 8.0 / MariaDB ≥ 10.2 (z. B. für phpMyAdmin, Adminer oder die Komman
 | [`2_changes_per_month_log.sql`](Resources/Private/Sql/2_changes_per_month_log.sql)           | Änderungen pro Monat und Baum aus `sys_log` (alle Tabellen)   |
 | [`3_last_change_per_tree.sql`](Resources/Private/Sql/3_last_change_per_tree.sql)             | letzte Änderung je Baum anhand der `tstamp`-Felder            |
 
-Die SQL-Variante nimmt als Wurzeln die Seiten mit `is_siteroot = 1`. Änderungen, bei denen nur `is_siteroot`
+Die SQL-Variante nimmt als Wurzeln die Seiten mit `is_siteroot = 1`, und zwar nur aktive (nicht gelöscht, nicht
+versteckt, innerhalb von Start-/Stoppzeit); Bäume mit inaktiver Wurzelseite fehlen in der Ausgabe vollständig. Änderungen, bei denen nur `is_siteroot`
 umgestellt wurde, zählen auch hier nicht (CTE `ignored`, benötigt die JSON-Funktionen von MySQL 8 / MariaDB 10.2.3+).
 Die Ausgabe ist Semikolon-getrennt: eine einzige Spalte, deren Name die Überschrift des Skripts ist; die erste
 Datenzeile enthält die Spaltenköpfe, Titel stehen in Anführungszeichen. Beispiel:
@@ -183,7 +190,7 @@ sortiert nach Wurzelseite und Monat:
 
 | Spalte | Bedeutung |
 |---|---|
-| `root_uid` | UID der Wurzelseite (Seite mit *Als Anfang der Webseite benutzen*) |
+| `root_uid` | UID der Wurzelseite (aktive Seite mit *Als Anfang der Webseite benutzen*) |
 | `root_title` | Titel der Wurzelseite |
 | `monat` | Kalendermonat `JJJJ-MM`. **Nur Monate mit mindestens einer Änderung** erscheinen (anders als in der Extension). Zeitraum: die letzten 12 Monate inkl. aktuellem Monat – anpassbar über `INTERVAL 11 MONTH` im Skript. |
 | `aenderungen` | Anzahl der Änderungen in diesem Monat. Skript 1: Einträge in `sys_history` für Seiten und Inhaltselemente. Skript 2: Einträge in `sys_log` (Datenbankaktionen neu/geändert/gelöscht/verschoben/übersetzt) für alle Tabellen. |
