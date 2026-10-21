@@ -162,7 +162,7 @@ Wird aus Ansicht 1 oder 2 geöffnet oder über eine Auswahlliste.
 - Direkte Anbindung an TYPO3 oder die Datenbank. Die Daten kommen ausschließlich aus den CSV-Exporten.
 - Speichern von Verläufen über mehrere Exporte hinweg.
 - Benutzerverwaltung oder Login.
-- Export als CSV oder PDF und ein eigenes Druck-Stylesheet.
+- Export als CSV. (Die Ansicht „Lage“ lässt sich inzwischen drucken bzw. als PDF speichern, siehe README.)
 - Weitere TYPO3-Abfragen. Es gibt nur diese beiden Exporte.
 - Echte CSV-Daten im Repository. Die Vereinsdaten werden nicht eingecheckt.
 
@@ -184,4 +184,4 @@ Wird aus Ansicht 1 oder 2 geöffnet oder über eine Auswahlliste.
 | 3 | Maßgeblicher Zeitstempel für „letzte Änderung“ | Datei A |
 | 4 | Weitere Abfragen (z. B. „2)“) | Keine |
 | 5 | CSVs als Testdaten im Repository | Nein |
-| 6 | Export / Druckansicht | Entfällt |
+| 6 | Export / Druckansicht | CSV-Export entfällt. Druck/PDF der Ansicht „Lage“ mit allen Gruppen aufgeklappt (nachträglich ergänzt). |

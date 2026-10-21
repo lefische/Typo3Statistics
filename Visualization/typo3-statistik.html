@@ -334,7 +334,7 @@ details.more > summary { cursor: pointer; color: var(--accent-ink); width: max-c
 .hm-compact.nums td.c { font-size: 11px; }
 .hm-tools .tg { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 
-@media (max-width: 960px) {
+@media screen and (max-width: 960px) {
   .split { grid-template-columns: 1fr; }
   .card.vlist { position: static; }
   .vrows { max-height: 320px; }
@@ -343,11 +343,33 @@ details.more > summary { cursor: pointer; color: var(--accent-ink); width: max-c
   .alist .dt, .alist .sp { display: none !important; }
 }
 
-@media (max-width: 720px) {
+@media screen and (max-width: 720px) {
   .grid2 { grid-template-columns: 1fr; }
   .search input { width: 100%; }
   .search { flex: 1 1 100%; }
   .tile .v { font-size: 22px; }
+}
+/* Druck / PDF-Export der Lage */
+.lage-bar { display: flex; justify-content: flex-end; margin: -4px 0 12px; }
+.print-only { display: none; }
+@media print {
+  @page { size: A4 portrait; margin: 14mm 12mm; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: #fff; font-size: 11px; }
+  .wrap { max-width: none; padding: 0; }
+  .settings, .tabs, footer, #appMsgs, #loader, .tip, .lage-bar, .noprint, details.grp > summary h2::after { display: none !important; }
+  #view-vereine, #view-verlauf { display: none !important; }
+  #view-lage { display: block !important; }
+  .print-only { display: block; color: var(--muted); font-size: 10px; margin: 0 0 10px; }
+  .topbar { margin-bottom: 2px; }
+  .card { border-color: #d6d5cf; padding: 10px 12px; break-inside: auto; }
+  .tile { padding: 8px 10px; break-inside: avoid; }
+  .tile .v { font-size: 20px; }
+  .tiles { gap: 8px; margin-bottom: 10px; }
+  .card.grp { margin-top: 10px; }
+  .card h2, details.grp > summary { break-after: avoid; }
+  .alist .row > * { padding: 4px 8px; break-inside: avoid; }
+  .alist .row:hover > * { background: none; }
 }
 @media (forced-colors: active) {
   .dot, .chart .bar, .hbars .fill { forced-color-adjust: none; }
@@ -922,7 +944,7 @@ function renderLage() {
   const unknown = base.filter(t => t.st === STATUS_UNKNOWN);
   const attention = `<div class="card">
     <h2>Brauchen Aufmerksamkeit <span class="cnt">${fmtN(need.length)}</span></h2>
-    <p class="hint">Seit über ${STATUS[1].max} Tagen keine Änderung · Stichtag ${fmtDate(stichtag())} · Klick öffnet den Verein.</p>
+    <p class="hint">Seit über ${STATUS[1].max} Tagen keine Änderung · Stichtag ${fmtDate(stichtag())}<span class="noprint"> · Klick öffnet den Verein.</span></p>
     ${need.length ? attentionList(need) : `<div class="allgood">${statusIcon('good')} Alle Vereine haben in den letzten ${STATUS[1].max} Tagen etwas geändert.</div>`}
   </div>`;
   const group = (key, title, hint, open) => {
@@ -931,7 +953,9 @@ function renderLage() {
     return `<details class="card grp"${open ? ' open' : ''}><summary><h2>${statusIcon(key)}${esc(title)} <span class="n">${fmtN(list.length)}</span></h2></summary>
       <p class="hint">${esc(hint)}</p>${attentionList(list)}</details>`;
   };
-  el.innerHTML = tiles + attention +
+  const bar = `<div class="lage-bar"><button class="btn ghost" id="printLage" data-tip="Öffnet den Druckdialog – dort „Als PDF speichern“ wählen">Drucken / als PDF speichern</button></div>`;
+  const printNote = `<p class="print-only">Ausgedruckt am ${fmtDateTime(new Date())} · Stichtag ${fmtDate(stichtag())}${S.internal ? ' · inkl. interner Seitenbäume' : ''}</p>`;
+  el.innerHTML = printNote + bar + tiles + attention +
     group('warning', 'Ruhig – bald nachfragen', `${statusRange(STATUS[1])} seit der letzten Änderung`, false) +
     group('good', 'Aktiv', `${statusRange(STATUS[0])} seit der letzten Änderung`, false) +
     (unknown.length ? `<div class="card grp"><h2>${statusIcon('unknown')}Ohne Datum <span class="n">${unknown.length}</span></h2>${attentionList(unknown)}</div>` : '') +
@@ -1160,6 +1184,26 @@ function bindUI() {
     if (o && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go('vereine', +o.dataset.open); }
   });
   let rt;
+  // Drucken: immer die Lage, alle Gruppen aufgeklappt, im hellen Farbschema
+  let printState = null;
+  window.addEventListener('beforeprint', () => {
+    if (!S.trees.length || printState) return;
+    printState = { title: document.title, theme: document.documentElement.getAttribute('data-theme'), open: [] };
+    renderLage();
+    document.querySelectorAll('#view-lage details').forEach(d => { if (!d.open) { d.open = true; printState.open.push(d); } });
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.title = `TYPO3 Statistik – Lage ${fmtDate(stichtag())}`;
+    hideTip();
+  });
+  window.addEventListener('afterprint', () => {
+    if (!printState) return;
+    printState.open.forEach(d => { d.open = false; });
+    if (printState.theme == null) document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', printState.theme);
+    document.title = printState.title;
+    printState = null;
+  });
+  $('#view-lage').addEventListener('click', e => { if (e.target.closest('#printLage')) window.print(); });
+
   window.addEventListener('resize', () => {
     clearTimeout(rt);
     rt = setTimeout(() => { if (S.trees.length && S.view !== 'lage') render(); }, 150);
